@@ -1,4 +1,4 @@
-{Katerelow + Mac Milla} = 
+
 SET FOREIGN_KEY_CHECKS = 0;
 SET NAMES utf8mb4;
 
@@ -12,11 +12,7 @@ CREATE TABLE anthropos (
     PRIMARY KEY (amka)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE tipos_proswpikou(
-    typos_onoma VARCHAR(20) NOT NULL,
-    typosId           VARCHAR(20)     NOT NULL,
-    PRIMARY KEY (typosId)
-);
+
 CREATE TABLE vathmida_iatrou(
     vathmida_id INT AUTO_INCREMENT PRIMARY KEY,
     vathmida_onoma VARCHAR(30),
@@ -30,8 +26,8 @@ CREATE TABLE proswpiko (
 
     PRIMARY KEY (amka),
 
-    FOREIGN KEY (typos_proswpikou) 
-        REFERENCES tipos_proswpikou(typosId),
+    
+    
 
     FOREIGN KEY (amka) 
         REFERENCES anthropos(amka)
