@@ -25,10 +25,6 @@ CREATE TABLE proswpiko (
     typos_proswpikou        VARCHAR(20)             NOT NULL,
 
     PRIMARY KEY (amka),
-
-    
-    
-
     FOREIGN KEY (amka) 
         REFERENCES anthropos(amka)
         ON DELETE CASCADE 

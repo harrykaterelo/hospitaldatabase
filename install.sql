@@ -186,18 +186,7 @@ SET FOREIGN_KEY_CHECKS = 1;
     -- -- ============================================================
     -- -- 12. ΕΦΗΜΕΡΙΑ_ΠΡΟΣΩΠΙΚΟ  (M:N junction)
     -- -- ============================================================
-    -- CREATE TABLE efimeria_proswpiko (
-    --     onoma_tmimatos  VARCHAR(100)    NOT NULL,
-    --     imerominia      DATE            NOT NULL,
-    --     vardia          VARCHAR(15)     NOT NULL,
-    --     amka_proswpiko  CHAR(11)        NOT NULL,
-    --     PRIMARY KEY (onoma_tmimatos, imerominia, vardia, amka_proswpiko),
-    --     FOREIGN KEY (onoma_tmimatos, imerominia, vardia)
-    --         REFERENCES efimeria(onoma_tmimatos, imerominia, vardia)
-    --         ON DELETE CASCADE ON UPDATE CASCADE,
-    --     FOREIGN KEY (amka_proswpiko) REFERENCES proswpiko(amka)
-    --         ON DELETE CASCADE ON UPDATE CASCADE
-    -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    
     
     -- -- ============================================================
     -- -- 13. ΚΕΝ  (Κλειστά Ενοποιημένα Νοσήλια)

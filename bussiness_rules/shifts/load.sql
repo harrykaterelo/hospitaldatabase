@@ -1,0 +1,33 @@
+CREATE TABLE efimeria_proswpiko (
+        tmima  INT    NOT NULL,
+        imerominia      DATE            NOT NULL,
+        vardia          INT NOT NULL,
+        amka_proswpiko  CHAR(11)        NOT NULL,
+        PRIMARY KEY (tmima, imerominia, vardia, amka_proswpiko),
+        FOREIGN KEY (tmima, imerominia, vardia)
+            REFERENCES efimeria(tmima, imerominia, vardia)
+            ON DELETE CASCADE ON UPDATE CASCADE,
+        FOREIGN KEY (amka_proswpiko) REFERENCES proswpiko(amka)
+           ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE efimeria (
+        tmima  INT    NOT NULL,
+        imerominia      DATE            NOT NULL,
+        vardia          INT NOT NULL,
+        FOREIGN KEY (vardia) REFERENCES vardia(vardia_id),
+        PRIMARY KEY (tmima, imerominia, vardia),
+        FOREIGN KEY (tmima) REFERENCES tmima(tmima_id)
+            ON DELETE CASCADE ON UPDATE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE vardia (
+    vardia_id INT AUTO_INCREMENT PRIMARY KEY,
+    vardia_onoma VARCHAR(15) NOT NULL
+        CHECK (vardia_onoma IN ('Πρωινή','Απογευματινή','Νυχτερινή')),
+    
+    vardia_ora_ekkinisis TIME NOT NULL,
+    vardia_ora_lixis TIME NOT NULL,
+    endiamesi_ora_anapausis_hours INT NOT NULL CHECK (endiamesi_ora_anapausis_hours >= 0),
+    epitreptes_sinexomenes_vardies INT  NULL CHECK (epitreptes_sinexomenes_vardies >= 0)
+);
