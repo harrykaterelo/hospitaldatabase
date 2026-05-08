@@ -1,7 +1,7 @@
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS add_doctor //
-
+#test
 CREATE PROCEDURE add_doctor(
     IN p_amka CHAR(11),
     IN p_onoma VARCHAR(50),
