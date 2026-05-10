@@ -22,7 +22,8 @@ CREATE TABLE vathmida_iatrou(
 CREATE TABLE proswpiko (
     amka                    CHAR(11)        NOT NULL,
     imerominia_proslipsis   DATE            NOT NULL,
-    typos_proswpikou        VARCHAR(20)             NOT NULL,
+    typos_proswpikou        VARCHAR(20)     NOT NULL
+         CHECK (typos_proswpikou IN ('Ιατρός', 'Νοσηλευτής', 'Διοικητικό')),
 
     PRIMARY KEY (amka),
     FOREIGN KEY (amka) 
@@ -44,14 +45,20 @@ CREATE TABLE proswpiko (
         ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE nosileutis (
+    amka            CHAR(11)        NOT NULL,
+    vathmida_nosileuti VARCHAR(20)  NOT NULL
+        CHECK (vathmida_nosileuti IN ('Βοηθός Νοσηλευτή', 'Νοσηλευτής', 'Προϊστάμενος'))
+    PRIMARY KEY (amka),
+    FOREIGN KEY (amka) REFERENCES proswpiko(amka)
+        ON DELETE CASCADE ON UPDATE CASCADE
+)
+
 CREATE TABLE dioikitiko (
     amka            CHAR(11)        NOT NULL,
     rolos           VARCHAR(80)     NOT NULL,
     grafeio         VARCHAR(50)     NULL,
-    onoma_tmimatos  VARCHAR(100)    NOT NULL,
     PRIMARY KEY (amka),
     FOREIGN KEY (amka) REFERENCES proswpiko(amka)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (onoma_tmimatos) REFERENCES tmima(onoma)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+        ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

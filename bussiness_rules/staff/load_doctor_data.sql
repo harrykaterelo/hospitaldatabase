@@ -1,6 +1,12 @@
 -- Generated CALL statements for add_doctor
 -- Run after creating procedure, triggers and vathmida_iatrou rows.
 -- Important: do not reorder these CALLs. Supervisors are inserted before supervisees.
+-- Vathmides (must exist before doctors are inserted)
+INSERT INTO vathmida_iatrou (vathmida_onoma, is_supervised, can_supervise)
+VALUES ('Ειδικευόμενος',  1, 0),
+       ('Επιμελητής Β',   0, 1),
+       ('Επιμελητής Α',   0, 1),
+       ('Διευθυντής',     0, 1);
 
 CALL add_doctor('02027100001', 'Αναστασία', 'Σταυρίδου', 55, 'anastasia.stayridoy1@hospital.gr', '+306971000137', '2005-02-04', 'Ιατρός', 'ISA-048001', 'Νευρολογία', 2, NULL);
 CALL add_doctor('03037000002', 'Δήμητρα', 'Μιχαηλίδου', 56, 'dimitra.michailidoy2@hospital.gr', '+306971000274', '2006-03-07', 'Ιατρός', 'ISA-048002', 'Οφθαλμολογία', 2, NULL);
