@@ -17,7 +17,8 @@ CREATE TABLE vathmida_iatrou(
     vathmida_id INT AUTO_INCREMENT PRIMARY KEY,
     vathmida_onoma VARCHAR(30),
     is_supervised BOOL NULL,
-    can_supervise BOOL NULL
+    can_supervise BOOL NULL,
+    can_cover_specialist_shift BOOL NOT NULL DEFAULT 0
 );
 CREATE TABLE proswpiko (
     amka                    CHAR(11)        NOT NULL,

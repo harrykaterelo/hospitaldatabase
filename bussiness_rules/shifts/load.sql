@@ -11,7 +11,14 @@ CREATE TABLE efimeria_proswpiko (
            ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE efimeria_requirements (
+    iatros_min_count INT NOT NULL DEFAULT 3 CHECK (iatros_min_count >= 0),
+    nosileutes_min_count INT NOT NULL DEFAULT 6 CHECK (nosileutes_min_count >= 0),
+    dioikitiko_min_count INT NOT NULL DEFAULT 2 CHECK (dioikitiko_min_count >= 0),
+    PRIMARY KEY (iatros_min_count, nosileutes_min_count, dioikitiko_min_count)
+);
 CREATE TABLE efimeria (
+        statusEf VARCHAR(20) NOT NULL DEFAULT 'DRAFT',
         tmima  INT    NOT NULL,
         imerominia      DATE            NOT NULL,
         vardia          INT NOT NULL,
