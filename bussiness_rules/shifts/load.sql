@@ -12,6 +12,9 @@ CREATE TABLE efimeria_proswpiko (
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE efimeria_requirements (
+    iatros_max_monthly_ef_count INT NOT NULL DEFAULT 15,
+    nosileutes_max_monthly_ef_count INT NOT NULL DEFAULT 20,
+    dioikitiko_max_monthly_ef_count INT NOT NULL DEFAULT 25,
     iatros_min_count INT NOT NULL DEFAULT 3 CHECK (iatros_min_count >= 0),
     nosileutes_min_count INT NOT NULL DEFAULT 6 CHECK (nosileutes_min_count >= 0),
     dioikitiko_min_count INT NOT NULL DEFAULT 2 CHECK (dioikitiko_min_count >= 0),

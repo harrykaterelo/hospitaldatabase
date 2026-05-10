@@ -1,5 +1,5 @@
 DELIMITER //
-
+DROP FUNCTION IF EXISTS efimeria_check //
 CREATE FUNCTION efimeria_check(
     p_tmima INT,
     p_imerominia DATE,
@@ -34,13 +34,13 @@ BEGIN
         COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'iatros' THEN 1 ELSE 0 END), 0),
         COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'nosileutis' THEN 1 ELSE 0 END), 0),
         COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'dioikitikos' THEN 1 ELSE 0 END), 0)
-    INTO 
+    INTO    
         v_doctors,
         v_nurses,
         v_admins
     FROM efimeria_proswpiko ep
     JOIN proswpiko p
-        ON ep.amka = p.amka
+        ON ep.amka_proswpiko = p.amka
     WHERE ep.tmima = p_tmima
       AND ep.imerominia = p_imerominia
       AND ep.vardia = p_vardia;
@@ -59,7 +59,7 @@ BEGIN
         docs_that_can_cover_shift
     FROM efimeria_proswpiko ep
     JOIN iatros i
-        ON ep.amka = i.amka
+        ON ep.amka_proswpiko = i.amka
     JOIN vathmida v
         ON i.vathmida = v.vathmida
     WHERE ep.tmima = p_tmima
