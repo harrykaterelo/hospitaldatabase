@@ -12,12 +12,12 @@ CREATE TRIGGER nosileia_insert_trigger
 BEFORE INSERT ON nosileia
 FOR EACH ROW
 BEGIN
-    DECLARE v_katastasi VARCHAR(30);
+    DECLARE v_klini_available BOOL;
 
-    SELECT katastasi
+    SELECT CASE(WHEN ar_kliis=NULL THEN 0 ELSE 1)
     INTO v_katastasi
-    FROM klini
-    WHERE tmima_id = NEW.tmima_id AND ar_kliis = NEW.ar_kliis;
+    FROM diathesimes_klines
+    WHERE  ar_kliis = NEW.ar_kliis;
 
     IF v_katastasi != 'Διαθέσιμη' THEN
         SIGNAL SQLSTATE '45000'

@@ -52,29 +52,22 @@ CREATE TABLE nosileia (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
  CREATE TABLE diagnosi (
-    icd             VARCHAR(10)     NOT NULL,
-    perigrafi       TEXT            NOT NULL,
-    PRIMARY KEY (icd)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
-CREATE TABLE nosileia_diagnosi_eis (
     nosileia_id     INT             NOT NULL,
     icd             VARCHAR(10)     NOT NULL,
-    PRIMARY KEY (nosileia_id, icd),
+    
+    
+    tipos_diagnosis   VARCHAR(20)     NOT NULL
+        CHECK (tipos_diagnosis IN ('Εισοδος', 'Εξοδος', 'Κατά τη διάρκεια της νοσηλείας')),
+    PRIMARY KEY (icd, nosileia_id),
+    FOREIGN KEY (icd) REFERENCES icd(kodikos)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (nosileia_id) REFERENCES nosileia(nosileia_id)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (icd) REFERENCES diagnosi(icd)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+        ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE nosileia_diagnosi_exodou (
-    nosileia_id     INT             NOT NULL,
-    icd             VARCHAR(10)     NOT NULL,
-    PRIMARY KEY (nosileia_id, icd),
-    FOREIGN KEY (nosileia_id) REFERENCES nosileia(nosileia_id)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (icd) REFERENCES diagnosi(icd)
-        ON DELETE RESTRICT ON UPDATE CASCADE
+ CREATE TABLE icd (
+    kodikos VARCHAR(10) NOT NULL,
+    perigrafi TEXT NOT NULL,
+    PRIMARY KEY (kodikos)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
@@ -114,7 +107,7 @@ CREATE TABLE xwros_epembasis (
     orofos           VARCHAR(30)     NULL,
     PRIMARY KEY (kodikos)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
+
 CREATE TABLE iatrikipraxi (
     kodikos                 VARCHAR(20)     NOT NULL,
     nosileia_id             INT             NOT NULL,
