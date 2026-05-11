@@ -23,11 +23,11 @@ BEGIN
     */
     SELECT
         CASE
-            WHEN p.typos_proswpikou = 'iatros'
+            WHEN p.typos_proswpikou = 'Ιατρός'
                 THEN er.iatros_max_monthly_ef_count
-            WHEN p.typos_proswpikou = 'nosileutis'
+            WHEN p.typos_proswpikou = 'Νοσηλευτής'
                 THEN er.nosileutes_max_monthly_ef_count
-            WHEN p.typos_proswpikou = 'dioikitikos'
+            WHEN p.typos_proswpikou = 'Διοικητικό'
                 THEN er.dioikitiko_max_monthly_ef_count
             ELSE 0
         END,

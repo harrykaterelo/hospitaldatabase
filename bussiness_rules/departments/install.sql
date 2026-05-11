@@ -3,11 +3,11 @@ CREATE TABLE tmima (
     perigrafi       TEXT            NULL,
     arithmos_klinon SMALLINT        NOT NULL CHECK (arithmos_klinon >= 0),
     orofos_ktiriou  VARCHAR(50)     NOT NULL,
-    amka_dieftinti  CHAR(11)        NULL, 
+    amka_dieftinti  CHAR(11)        NOT NULL, 
     FOREIGN KEY (amka_dieftinti) REFERENCES iatros(amka)
-    ON DELETE SET NULL ON UPDATE CASCADE;
-    tmima_id        INT             AUTO_INCREMENT,
-    PRIMARY KEY (tmima_id),
+    ON DELETE SET NULL ON UPDATE CASCADE,
+    tmima_id        INT        NOT NULL     AUTO_INCREMENT,
+    PRIMARY KEY (tmima_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
 

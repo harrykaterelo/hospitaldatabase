@@ -142,7 +142,7 @@ INSERT INTO efimeria_requirements (
 
 /* Make rest/consecutive limits deterministic for the test vardies. */
 UPDATE vardia
-SET endiamesi_ora_anapausis_hours = 8,
+SET endiamesi_ora_anapausis_hours = 8,  
     epitreptes_sinexomenes_vardies = 2
 WHERE vardia_id IN (@morning_id, @afternoon_id, @night_id);
 

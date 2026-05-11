@@ -18,7 +18,8 @@ CREATE TABLE vathmida_iatrou(
     vathmida_onoma VARCHAR(30),
     is_supervised BOOL NULL,
     can_supervise BOOL NULL,
-    can_cover_specialist_shift BOOL NOT NULL DEFAULT 0
+    can_cover_specialist_shift BOOL NOT NULL DEFAULT 0,
+    can_run_department BOOL NOT NULL DEFAULT 0
 );
 CREATE TABLE proswpiko (
     amka                    CHAR(11)        NOT NULL,
@@ -49,13 +50,13 @@ CREATE TABLE proswpiko (
 CREATE TABLE nosileutis (
     amka            CHAR(11)        NOT NULL,
     vathmida_nosileuti VARCHAR(20)  NOT NULL
-        CHECK (vathmida_nosileuti IN ('Βοηθός Νοσηλευτή', 'Νοσηλευτής', 'Προϊστάμενος'))
+        CHECK (vathmida_nosileuti IN ('Βοηθός Νοσηλευτή', 'Νοσηλευτής', 'Προϊστάμενος')),
     PRIMARY KEY (amka),
     FOREIGN KEY (amka) REFERENCES proswpiko(amka)
         ON DELETE CASCADE ON UPDATE CASCADE
-)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE dioikitiko (
+CREATE TABLE dioikitiko (   
     amka            CHAR(11)        NOT NULL,
     rolos           VARCHAR(80)     NOT NULL,
     grafeio         VARCHAR(50)     NULL,
