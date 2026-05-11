@@ -9,8 +9,7 @@ CREATE TABLE tmima (
     tmima_id        INT             AUTO_INCREMENT,
     PRIMARY KEY (tmima_id),
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
-
+  
 CREATE TABLE proswpiko_anikei_se_tmima (
     amka_proswpikou CHAR(11) NOT NULL,
     tmima_id        INT      NOT NULL,
