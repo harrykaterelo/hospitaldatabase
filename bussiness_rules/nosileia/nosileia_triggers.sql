@@ -276,7 +276,6 @@ BEGIN
     FROM praxi_voithos pv
     JOIN iatrikipraxi ip ON ip.kodikos = pv.kod_praxis
     WHERE pv.amka_voithou = NEW.amka_voithou
-      AND pv.kod_praxis != NEW.kod_praxis
       AND v_op_start < DATE_ADD(ip.imerominia_wra, INTERVAL ip.diarkeia_lepta MINUTE)
       AND ip.imerominia_wra < v_op_end;
 
