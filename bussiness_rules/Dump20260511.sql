@@ -1,4 +1,4 @@
-CREATE DATABASE  IF NOT EXISTS `hospitaldb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+CREATE DATABASE  IF NOT EXISTS `hospitaldb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 USE `hospitaldb`;
 -- MySQL dump 10.13  Distrib 8.0.46, for macos15 (arm64)
 --
@@ -9,7 +9,7 @@ USE `hospitaldb`;
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
 /*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
 /*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
@@ -33,7 +33,7 @@ CREATE TABLE `anthropos` (
   `tilefono` varchar(15) NOT NULL,
   PRIMARY KEY (`amka`),
   CONSTRAINT `anthropos_chk_1` CHECK ((`ilikia` between 0 and 150))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -65,10 +65,10 @@ CREATE TABLE `asthenis` (
   `asfalistikos_foreas` varchar(100) NOT NULL,
   PRIMARY KEY (`amka`),
   CONSTRAINT `asthenis_ibfk_1` FOREIGN KEY (`amka`) REFERENCES `anthropos` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `asthenis_chk_1` CHECK ((`fylo` in (_utf8mb4'Αρσενικό',_utf8mb4'Θηλυκό'))),
+  CONSTRAINT `asthenis_chk_1` CHECK ((`fylo` in ('Αρσενικό','Θηλυκό'))),
   CONSTRAINT `asthenis_chk_2` CHECK ((`varos` > 0)),
   CONSTRAINT `asthenis_chk_3` CHECK ((`ypsos` > 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -101,7 +101,7 @@ CREATE TABLE `axiologisi` (
   CONSTRAINT `axiologisi_chk_3` CHECK ((`kathariotita` between 1 and 5)),
   CONSTRAINT `axiologisi_chk_4` CHECK ((`fagito` between 1 and 5)),
   CONSTRAINT `axiologisi_chk_5` CHECK ((`synolikí_empeiria` between 1 and 5))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -117,7 +117,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -155,8 +155,8 @@ CREATE TABLE `diagnosi` (
   KEY `nosileia_id` (`nosileia_id`),
   CONSTRAINT `diagnosi_ibfk_1` FOREIGN KEY (`icd`) REFERENCES `icd` (`kodikos`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `diagnosi_ibfk_2` FOREIGN KEY (`nosileia_id`) REFERENCES `nosileia` (`nosileia_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `diagnosi_chk_1` CHECK ((`tipos_diagnosis` in (_utf8mb4'Εισοδος',_utf8mb4'Εξοδος',_utf8mb4'Κατά τη διάρκεια της νοσηλείας')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `diagnosi_chk_1` CHECK ((`tipos_diagnosis` in ('Εισοδος','Εξοδος','Κατά τη διάρκεια της νοσηλείας')))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -181,7 +181,7 @@ CREATE TABLE `dioikitiko` (
   `grafeio` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`amka`),
   CONSTRAINT `dioikitiko_ibfk_1` FOREIGN KEY (`amka`) REFERENCES `proswpiko` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -209,7 +209,7 @@ CREATE TABLE `efimeria` (
   KEY `vardia` (`vardia`),
   CONSTRAINT `efimeria_ibfk_1` FOREIGN KEY (`vardia`) REFERENCES `vardia` (`vardia_id`),
   CONSTRAINT `efimeria_ibfk_2` FOREIGN KEY (`tmima`) REFERENCES `tmima` (`tmima_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -237,7 +237,7 @@ CREATE TABLE `efimeria_proswpiko` (
   KEY `amka_proswpiko` (`amka_proswpiko`),
   CONSTRAINT `efimeria_proswpiko_ibfk_1` FOREIGN KEY (`tmima`, `imerominia`, `vardia`) REFERENCES `efimeria` (`tmima`, `imerominia`, `vardia`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `efimeria_proswpiko_ibfk_2` FOREIGN KEY (`amka_proswpiko`) REFERENCES `proswpiko` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -254,7 +254,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -387,7 +387,7 @@ CREATE TABLE `efimeria_requirements` (
   CONSTRAINT `efimeria_requirements_chk_1` CHECK ((`iatros_min_count` >= 0)),
   CONSTRAINT `efimeria_requirements_chk_2` CHECK ((`nosileutes_min_count` >= 0)),
   CONSTRAINT `efimeria_requirements_chk_3` CHECK ((`dioikitiko_min_count` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -415,7 +415,7 @@ CREATE TABLE `ektakti_epafi` (
   `email` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`amka_astheni`,`tilefono`),
   CONSTRAINT `ektakti_epafi_ibfk_1` FOREIGN KEY (`amka_astheni`) REFERENCES `asthenis` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -439,7 +439,7 @@ CREATE TABLE `error_log` (
   `error_message` text NOT NULL,
   `error_time` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -474,7 +474,7 @@ CREATE TABLE `exetasi` (
   CONSTRAINT `exetasi_ibfk_1` FOREIGN KEY (`nosileia_id`) REFERENCES `nosileia` (`nosileia_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `exetasi_ibfk_2` FOREIGN KEY (`amka_iatrou`) REFERENCES `iatros` (`amka`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `exetasi_chk_1` CHECK ((`kostos` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -490,7 +490,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -543,10 +543,10 @@ CREATE TABLE `iatrikipraxi` (
   CONSTRAINT `iatrikipraxi_ibfk_1` FOREIGN KEY (`nosileia_id`) REFERENCES `nosileia` (`nosileia_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `iatrikipraxi_ibfk_2` FOREIGN KEY (`amka_kyriou_xeirourgou`) REFERENCES `iatros` (`amka`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `iatrikipraxi_ibfk_3` FOREIGN KEY (`kod_xwrou`) REFERENCES `xwros_epembasis` (`kodikos`) ON DELETE RESTRICT ON UPDATE CASCADE,
-  CONSTRAINT `iatrikipraxi_chk_1` CHECK ((`katigoria` in (_utf8mb4'Χειρουργική',_utf8mb4'Διαγνωστική',_utf8mb4'Θεραπευτική'))),
+  CONSTRAINT `iatrikipraxi_chk_1` CHECK ((`katigoria` in ('Χειρουργική','Διαγνωστική','Θεραπευτική'))),
   CONSTRAINT `iatrikipraxi_chk_2` CHECK ((`diarkeia_lepta` > 0)),
   CONSTRAINT `iatrikipraxi_chk_3` CHECK ((`kostos` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -562,7 +562,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -658,7 +658,7 @@ CREATE TABLE `iatros` (
   CONSTRAINT `iatros_ibfk_1` FOREIGN KEY (`vathmida`) REFERENCES `vathmida_iatrou` (`vathmida_id`),
   CONSTRAINT `iatros_ibfk_2` FOREIGN KEY (`amka`) REFERENCES `proswpiko` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `iatros_ibfk_3` FOREIGN KEY (`amka_epoptis`) REFERENCES `iatros` (`amka`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -675,7 +675,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -783,7 +783,7 @@ CREATE TABLE `icd` (
   `kodikos` varchar(10) NOT NULL,
   `perigrafi` text NOT NULL,
   PRIMARY KEY (`kodikos`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -813,7 +813,7 @@ CREATE TABLE `ken` (
   CONSTRAINT `ken_chk_1` CHECK ((`vasiko_kostos` >= 0)),
   CONSTRAINT `ken_chk_2` CHECK ((`mdn` > 0)),
   CONSTRAINT `ken_chk_3` CHECK ((`imer_xrewsi` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -840,8 +840,8 @@ CREATE TABLE `klini` (
   PRIMARY KEY (`tmima_id`,`ar_kliis`),
   CONSTRAINT `klini_ibfk_1` FOREIGN KEY (`tmima_id`) REFERENCES `tmima` (`tmima_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `klini_chk_1` CHECK ((`ar_kliis` > 0)),
-  CONSTRAINT `klini_chk_2` CHECK ((`katastasi` in (_utf8mb4'Διαθέσιμη',_utf8mb4'Κατειλημμένη',_utf8mb4'Υπό Συντήρηση')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `klini_chk_2` CHECK ((`katastasi` in ('Διαθέσιμη','Κατειλημμένη','Υπό Συντήρηση')))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -878,7 +878,7 @@ CREATE TABLE `nosileia` (
   CONSTRAINT `nosileia_ibfk_3` FOREIGN KEY (`kod_ken`) REFERENCES `ken` (`kod_ken`) ON DELETE RESTRICT ON UPDATE CASCADE,
   CONSTRAINT `nosileia_chk_1` CHECK ((`synoliko_kostos` >= 0)),
   CONSTRAINT `nosileia_chk_2` CHECK (((`imer_exodou` is null) or (`imer_exodou` >= `imer_eisagogis`)))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -894,7 +894,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -921,7 +921,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -940,7 +940,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -976,7 +976,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -1007,7 +1007,7 @@ CREATE TABLE `nosileia_diagnosi_eis` (
   KEY `icd` (`icd`),
   CONSTRAINT `nosileia_diagnosi_eis_ibfk_1` FOREIGN KEY (`nosileia_id`) REFERENCES `nosileia` (`nosileia_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `nosileia_diagnosi_eis_ibfk_2` FOREIGN KEY (`icd`) REFERENCES `diagnosi` (`icd`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1033,7 +1033,7 @@ CREATE TABLE `nosileia_diagnosi_exodou` (
   KEY `icd` (`icd`),
   CONSTRAINT `nosileia_diagnosi_exodou_ibfk_1` FOREIGN KEY (`nosileia_id`) REFERENCES `nosileia` (`nosileia_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `nosileia_diagnosi_exodou_ibfk_2` FOREIGN KEY (`icd`) REFERENCES `diagnosi` (`icd`) ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1057,8 +1057,8 @@ CREATE TABLE `nosileutis` (
   `vathmida_nosileuti` varchar(20) NOT NULL,
   PRIMARY KEY (`amka`),
   CONSTRAINT `nosileutis_ibfk_1` FOREIGN KEY (`amka`) REFERENCES `proswpiko` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `nosileutis_chk_1` CHECK ((`vathmida_nosileuti` in (_utf8mb4'Βοηθός Νοσηλευτή',_utf8mb4'Νοσηλευτής',_utf8mb4'Προϊστάμενος')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `nosileutis_chk_1` CHECK ((`vathmida_nosileuti` in ('Βοηθός Νοσηλευτή','Νοσηλευτής','Προϊστάμενος')))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1084,7 +1084,7 @@ CREATE TABLE `praxi_voithos` (
   KEY `amka_voithou` (`amka_voithou`),
   CONSTRAINT `praxi_voithos_ibfk_1` FOREIGN KEY (`kod_praxis`) REFERENCES `iatrikipraxi` (`kodikos`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `praxi_voithos_ibfk_2` FOREIGN KEY (`amka_voithou`) REFERENCES `proswpiko` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1100,7 +1100,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -1187,7 +1187,7 @@ CREATE TABLE `proswpiko` (
   `typos_proswpikou` varchar(20) NOT NULL,
   PRIMARY KEY (`amka`),
   CONSTRAINT `proswpiko_ibfk_1` FOREIGN KEY (`amka`) REFERENCES `anthropos` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1214,7 +1214,7 @@ CREATE TABLE `proswpiko_allagi_tmimatos` (
   KEY `tmima_id` (`tmima_id`),
   CONSTRAINT `proswpiko_allagi_tmimatos_ibfk_1` FOREIGN KEY (`amka_proswpikou`) REFERENCES `proswpiko` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `proswpiko_allagi_tmimatos_ibfk_2` FOREIGN KEY (`tmima_id`) REFERENCES `tmima` (`tmima_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1240,7 +1240,7 @@ CREATE TABLE `proswpiko_anikei_se_tmima` (
   KEY `tmima_id` (`tmima_id`),
   CONSTRAINT `proswpiko_anikei_se_tmima_ibfk_1` FOREIGN KEY (`amka_proswpikou`) REFERENCES `proswpiko` (`amka`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `proswpiko_anikei_se_tmima_ibfk_2` FOREIGN KEY (`tmima_id`) REFERENCES `tmima` (`tmima_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1256,7 +1256,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -1358,7 +1358,7 @@ CREATE TABLE `tipos_proswpikou` (
   `typos_onoma` varchar(20) NOT NULL,
   `typosId` varchar(20) NOT NULL,
   PRIMARY KEY (`typosId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1388,7 +1388,7 @@ CREATE TABLE `tmima` (
   UNIQUE KEY `onoma` (`onoma`),
   KEY `fk_tmima_dieftintis` (`amka_dieftinti`),
   CONSTRAINT `tmima_chk_1` CHECK ((`arithmos_klinon` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=2147483647 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2147483647 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1416,10 +1416,10 @@ CREATE TABLE `vardia` (
   `endiamesi_ora_anapausis_hours` int NOT NULL,
   `epitreptes_sinexomenes_vardies` int DEFAULT NULL,
   PRIMARY KEY (`vardia_id`),
-  CONSTRAINT `vardia_chk_1` CHECK ((`vardia_onoma` in (_utf8mb4'Πρωινή',_utf8mb4'Απογευματινή',_utf8mb4'Νυχτερινή'))),
+  CONSTRAINT `vardia_chk_1` CHECK ((`vardia_onoma` in ('Πρωινή','Απογευματινή','Νυχτερινή'))),
   CONSTRAINT `vardia_chk_2` CHECK ((`endiamesi_ora_anapausis_hours` >= 0)),
   CONSTRAINT `vardia_chk_3` CHECK ((`epitreptes_sinexomenes_vardies` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1448,7 +1448,7 @@ CREATE TABLE `vathmida_iatrou` (
   `requires_senior_in_shift` tinyint(1) NOT NULL DEFAULT '0',
   `can_run_department` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`vathmida_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1473,8 +1473,8 @@ CREATE TABLE `xwros_epembasis` (
   `typos` varchar(30) NOT NULL,
   `orofos` varchar(30) DEFAULT NULL,
   PRIMARY KEY (`kodikos`),
-  CONSTRAINT `xwros_epembasis_chk_1` CHECK ((`typos` in (_utf8mb4'Χειρουργείο',_utf8mb4'Αίθουσα επέμβασης')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `xwros_epembasis_chk_1` CHECK ((`typos` in ('Χειρουργείο','Αίθουσα επέμβασης')))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1499,7 +1499,7 @@ UNLOCK TABLES;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -1586,7 +1586,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -1653,7 +1653,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
@@ -1744,7 +1744,7 @@ DELIMITER ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
 /*!50003 SET character_set_client  = utf8mb4 */ ;
 /*!50003 SET character_set_results = utf8mb4 */ ;
-/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET collation_connection  = utf8mb4_general_ci */ ;
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
