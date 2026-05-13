@@ -51,14 +51,12 @@ CREATE TABLE nosileia (
     CHECK (imer_exodou IS NULL OR imer_exodou >= imer_eisagogis)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
- CREATE TABLE diagnosi (
+CREATE TABLE diagnosi (
     nosileia_id     INT             NOT NULL,
-    icd             VARCHAR(10)     NOT NULL,
-    
-    
-    tipos_diagnosis   VARCHAR(20)     NOT NULL
-        CHECK (tipos_diagnosis IN ('Εισοδος', 'Εξοδος', 'Κατά τη διάρκεια της νοσηλείας')),
-    PRIMARY KEY (icd, nosileia_id),
+    icd             VARCHAR(10)     NULL,
+    tipos_diagnosis VARCHAR(20)     NOT NULL
+        CHECK (tipos_diagnosis IN ('Εισοδος', 'Εξοδος')),
+    PRIMARY KEY (nosileia_id, tipos_diagnosis),
     FOREIGN KEY (icd) REFERENCES icd(kodikos)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (nosileia_id) REFERENCES nosileia(nosileia_id)
@@ -104,7 +102,6 @@ CREATE TABLE xwros_epembasis (
     kodikos         VARCHAR(20)     NOT NULL,
     typos           VARCHAR(30)     NOT NULL
         CHECK (typos IN ('Χειρουργείο','Αίθουσα επέμβασης')),
-    orofos           VARCHAR(30)     NULL,
     PRIMARY KEY (kodikos)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

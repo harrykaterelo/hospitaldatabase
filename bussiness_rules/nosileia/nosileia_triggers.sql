@@ -309,4 +309,20 @@ BEGIN
     END IF;
 END //
 
+-- =====================================================
+-- TRIGGER: diagnosi_insert_trigger
+-- Η διάγνωση εισόδου απαιτεί υποχρεωτικά κωδικό ICD
+-- =====================================================
+DROP TRIGGER IF EXISTS diagnosi_insert_trigger //
+
+CREATE TRIGGER diagnosi_insert_trigger
+BEFORE INSERT ON diagnosi
+FOR EACH ROW
+BEGIN
+    IF NEW.tipos_diagnosis = 'Εισοδος' AND NEW.icd IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Η διάγνωση εισόδου απαιτεί κωδικό ICD';
+    END IF;
+END //
+
 DELIMITER ;

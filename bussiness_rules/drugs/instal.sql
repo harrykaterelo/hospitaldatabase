@@ -2,36 +2,34 @@ CREATE TABLE farmako (
     kod_ema             INT             NOT NULL AUTO_INCREMENT,
     onoma               VARCHAR(300)    NOT NULL,
     tropos_xorigisis    VARCHAR(200)    NULL,
-    xora_egkrisis       VARCHAR(100)    NULL,
-    katoxos_adeias      VARCHAR(200)    NULL,
-    xora_psmf           VARCHAR(500)    NULL,
-    epivlepsi_email     VARCHAR(200)    NULL,
-    epivlepsi_thl       VARCHAR(50)     NULL,
-    PRIMARY KEY (kod_ema)
+    PRIMARY KEY (kod_ema),
+    UNIQUE (onoma, tropos_xorigisis)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE drastiki_ousia (
+    ousia_id        INT             NOT NULL AUTO_INCREMENT,
     onoma           VARCHAR(300)    NOT NULL,
-    PRIMARY KEY (onoma)
+    PRIMARY KEY (ousia_id),
+    UNIQUE (onoma)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE farmako_drastiki (
     kod_ema         INT             NOT NULL,
-    onoma_do        VARCHAR(300)    NOT NULL,
-    PRIMARY KEY (kod_ema, onoma_do),
+    ousia_id        INT             NOT NULL,
+    PRIMARY KEY (kod_ema, ousia_id),
     FOREIGN KEY (kod_ema) REFERENCES farmako(kod_ema)
         ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (onoma_do) REFERENCES drastiki_ousia(onoma)
+    FOREIGN KEY (ousia_id) REFERENCES drastiki_ousia(ousia_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE allergy (
     amka_astheni    CHAR(11)        NOT NULL,
-    onoma_do        VARCHAR(300)    NOT NULL,
-    PRIMARY KEY (amka_astheni, onoma_do),
+    ousia_id        INT             NOT NULL,
+    PRIMARY KEY (amka_astheni, ousia_id),
     FOREIGN KEY (amka_astheni) REFERENCES asthenis(amka)
         ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (onoma_do) REFERENCES drastiki_ousia(onoma)
+    FOREIGN KEY (ousia_id) REFERENCES drastiki_ousia(ousia_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
