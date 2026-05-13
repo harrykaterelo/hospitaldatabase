@@ -27,25 +27,6 @@ CREATE TABLE proswpiko_anikei_se_tmima (
         ON UPDATE CASCADE
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE proswpiko_allagi_tmimatos (
-    amka_proswpikou CHAR(11) NOT NULL,
-    tmima_id        INT      NOT NULL,
-
-    PRIMARY KEY (amka_proswpikou, tmima_id),
-
-    FOREIGN KEY (amka_proswpikou)
-        REFERENCES proswpiko(amka)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-
-    FOREIGN KEY (tmima_id)
-        REFERENCES tmima(tmima_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-
-
 CREATE TABLE klini (   
     tmima_id        INT             NOT NULL,
     ar_kliis        SMALLINT        NOT NULL CHECK (ar_kliis > 0),
