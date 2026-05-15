@@ -36,19 +36,16 @@ CREATE TABLE nosileia (
     nosileia_id     INT             NOT NULL AUTO_INCREMENT,
     amka_astheni    CHAR(11)        NOT NULL,
     tmima_id        INT             NOT NULL,
-    ar_kliis        SMALLINT        NOT NULL,
+    ar_kliis        SMALLINT        NULL,
     kod_ken         VARCHAR(20)     NOT NULL,
-    imer_eisagogis  DATE            NOT NULL,
-    imer_exodou     DATE            NULL,
-    synoliko_kostos DECIMAL(10,2) NULL CHECK (synoliko_kostos >= 0),
+    synoliko_kostos DECIMAL(10,2)   NULL CHECK (synoliko_kostos >= 0),
     PRIMARY KEY (nosileia_id),
     FOREIGN KEY (amka_astheni) REFERENCES asthenis(amka)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (tmima_id, ar_kliis) REFERENCES klini(tmima_id, ar_kliis)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (kod_ken) REFERENCES ken(kod_ken)
-        ON DELETE RESTRICT ON UPDATE CASCADE,
-    CHECK (imer_exodou IS NULL OR imer_exodou >= imer_eisagogis)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
  
 CREATE TABLE diagnosi (
@@ -56,6 +53,7 @@ CREATE TABLE diagnosi (
     icd             VARCHAR(10)     NULL,
     tipos_diagnosis VARCHAR(20)     NOT NULL
         CHECK (tipos_diagnosis IN ('Εισοδος', 'Εξοδος')),
+    imerominia      DATE            NOT NULL,
     PRIMARY KEY (nosileia_id, tipos_diagnosis),
     FOREIGN KEY (icd) REFERENCES icd(kodikos)
         ON DELETE RESTRICT ON UPDATE CASCADE,

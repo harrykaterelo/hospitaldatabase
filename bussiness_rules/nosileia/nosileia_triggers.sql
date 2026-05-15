@@ -3,8 +3,7 @@ DELIMITER //
 -- =====================================================
 -- TRIGGER: nosileia_insert_trigger
 -- Ελέγχει πριν την εισαγωγή νοσηλείας:
---   1. Η ημερομηνία εισαγωγής δεν είναι μελλοντική
---   2. Η κλίνη είναι διαθέσιμη
+--   Η κλίνη είναι διαθέσιμη
 -- =====================================================
 DROP TRIGGER IF EXISTS nosileia_insert_trigger //
 
@@ -12,14 +11,28 @@ CREATE TRIGGER nosileia_insert_trigger
 BEFORE INSERT ON nosileia
 FOR EACH ROW
 BEGIN
-    DECLARE v_klini_available BOOL;
+    DECLARE v_klini_available INT DEFAULT 0;
+    DECLARE has_nosileia_already INT DEFAULT 0;
 
-    SELECT CASE(WHEN ar_kliis=NULL THEN 0 ELSE 1)
-    INTO v_katastasi
+    SELECT COUNT(*)
+    INTO has_nosileia_already
+    FROM nosileia n
+    JOIN diagnosi d_eis 
+        ON d_eis.nosileia_id = n.nosileia_id AND d_eis.tipos_diagnosis = 'Εισοδος'
+    LEFT JOIN diagnosi d_ex 
+        ON d_ex.nosileia_id = n.nosileia_id AND d_ex.tipos_diagnosis = 'Εξοδος'
+    WHERE n.amka_astheni = NEW.amka_astheni
+    AND d_ex.nosileia_id IS NULL;
+L
+
+
+
+    SELECT COUNT(*)
+    INTO v_klini_available
     FROM diathesimes_klines
-    WHERE  ar_kliis = NEW.ar_kliis;
+    WHERE tmima_id = NEW.tmima_id AND ar_kliis = NEW.ar_kliis;
 
-    IF v_katastasi != 'Διαθέσιμη' THEN
+    IF v_klini_available = 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Η κλίνη δεν είναι διαθέσιμη';
     END IF;
@@ -43,61 +56,6 @@ END //
 
 
 -- =====================================================
--- TRIGGER: nosileia_update_trigger
--- Όταν συμπληρωθεί η ημερομηνία εξόδου:
---   υπολογίζει το συνολικό κόστος βάσει του ΚΕΝ.
--- Τύπος:
---   actual_days <= mdn  -> vasiko_kostos
---   actual_days >  mdn  -> vasiko_kostos + (actual_days - mdn) * imer_xrewsi
--- =====================================================
-DROP TRIGGER IF EXISTS nosileia_update_trigger //
-
-CREATE TRIGGER nosileia_update_trigger
-BEFORE UPDATE ON nosileia
-FOR EACH ROW
-BEGIN
-    DECLARE v_actual_days INT;
-    DECLARE v_vasiko       DECIMAL(10,2);
-    DECLARE v_mdn          SMALLINT;
-    DECLARE v_imer_xrewsi  DECIMAL(8,2);
-
-    IF NEW.imer_exodou IS NOT NULL AND OLD.imer_exodou IS NULL THEN
-
-        SET v_actual_days = DATEDIFF(NEW.imer_exodou, NEW.imer_eisagogis);
-
-        SELECT vasiko_kostos, mdn, imer_xrewsi
-        INTO v_vasiko, v_mdn, v_imer_xrewsi
-        FROM ken
-        WHERE kod_ken = NEW.kod_ken;
-
-        IF v_actual_days <= v_mdn THEN
-            SET NEW.synoliko_kostos = v_vasiko;
-        ELSE
-            SET NEW.synoliko_kostos = v_vasiko + (v_actual_days - v_mdn) * v_imer_xrewsi;
-        END IF;
-    END IF;
-END //
-
-
--- =====================================================
--- TRIGGER: nosileia_after_update_trigger
--- Όταν συμπληρωθεί η ημερομηνία εξόδου, η κλίνη ξαναγίνεται Διαθέσιμη
--- =====================================================
-DROP TRIGGER IF EXISTS nosileia_after_update_trigger //
-
-CREATE TRIGGER nosileia_after_update_trigger
-AFTER UPDATE ON nosileia
-FOR EACH ROW
-BEGIN
-    IF NEW.imer_exodou IS NOT NULL AND OLD.imer_exodou IS NULL THEN
-        UPDATE klini
-        SET katastasi = 'Διαθέσιμη'
-        WHERE tmima_id = NEW.tmima_id AND ar_kliis = NEW.ar_kliis;
-    END IF;
-END //
-
-
--- =====================================================
 -- TRIGGER: exetasi_insert_trigger
 -- Ελέγχει ότι η ημερομηνία εξέτασης είναι εντός της νοσηλείας
 -- =====================================================
@@ -110,10 +68,13 @@ BEGIN
     DECLARE v_imer_eisagogis DATE;
     DECLARE v_imer_exodou    DATE;
 
-    SELECT imer_eisagogis, imer_exodou
-    INTO v_imer_eisagogis, v_imer_exodou
-    FROM nosileia
-    WHERE nosileia_id = NEW.nosileia_id;
+    SELECT imerominia INTO v_imer_eisagogis
+    FROM diagnosi
+    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εισοδος';
+
+    SELECT imerominia INTO v_imer_exodou
+    FROM diagnosi
+    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εξοδος';
 
     IF NEW.imerominia < v_imer_eisagogis THEN
         SIGNAL SQLSTATE '45000'
@@ -151,10 +112,13 @@ BEGIN
     SET v_new_end = DATE_ADD(NEW.imerominia_wra, INTERVAL NEW.diarkeia_lepta MINUTE);
 
     -- 1. Ημερομηνία επέμβασης εντός νοσηλείας
-    SELECT imer_eisagogis, imer_exodou
-    INTO v_imer_eisagogis, v_imer_exodou
-    FROM nosileia
-    WHERE nosileia_id = NEW.nosileia_id;
+    SELECT imerominia INTO v_imer_eisagogis
+    FROM diagnosi
+    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εισοδος';
+
+    SELECT imerominia INTO v_imer_exodou
+    FROM diagnosi
+    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εξοδος';
 
     IF DATE(NEW.imerominia_wra) < v_imer_eisagogis THEN
         SIGNAL SQLSTATE '45000'
@@ -230,7 +194,6 @@ BEGIN
     DECLARE v_as_surgeon_conflict       INT DEFAULT 0;
     DECLARE v_as_assistant_conflict     INT DEFAULT 0;
 
-    -- Πληροφορίες επέμβασης
     SELECT amka_kyriou_xeirourgou, imerominia_wra, diarkeia_lepta
     INTO v_main_surgeon, v_op_start, v_op_duration
     FROM iatrikipraxi
@@ -245,10 +208,8 @@ BEGIN
     END IF;
 
     -- 2. Έλεγχος τύπου προσωπικού
-    SELECT typos_proswpikou
-    INTO v_typos
-    FROM proswpiko
-    WHERE amka = NEW.amka_voithou;
+    SELECT typos_proswpikou INTO v_typos
+    FROM proswpiko WHERE amka = NEW.amka_voithou;
 
     IF v_typos = 'Διοικητικό' THEN
         SIGNAL SQLSTATE '45000'
@@ -296,22 +257,23 @@ CREATE TRIGGER axiologisi_insert_trigger
 BEFORE INSERT ON axiologisi
 FOR EACH ROW
 BEGIN
-    DECLARE v_imer_exodou DATE;
+    DECLARE v_exodos INT DEFAULT 0;
 
-    SELECT imer_exodou
-    INTO v_imer_exodou
-    FROM nosileia
-    WHERE nosileia_id = NEW.nosileia_id;
+    SELECT COUNT(*) INTO v_exodos
+    FROM diagnosi
+    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εξοδος';
 
-    IF v_imer_exodou IS NULL THEN
+    IF v_exodos = 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Η αξιολόγηση μπορεί να γίνει μόνο μετά την έξοδο του ασθενούς';
     END IF;
 END //
 
+
 -- =====================================================
 -- TRIGGER: diagnosi_insert_trigger
--- Η διάγνωση εισόδου απαιτεί υποχρεωτικά κωδικό ICD
+-- Η διάγνωση εισόδου απαιτεί υποχρεωτικά κωδικό ICD.
+-- Η ημερομηνία εξόδου πρέπει να είναι >= εισόδου.
 -- =====================================================
 DROP TRIGGER IF EXISTS diagnosi_insert_trigger //
 
@@ -319,9 +281,89 @@ CREATE TRIGGER diagnosi_insert_trigger
 BEFORE INSERT ON diagnosi
 FOR EACH ROW
 BEGIN
+    DECLARE v_imer_eisagogis DATE;
+
+    IF NEW.imerominia > CURDATE() THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Η ημερομηνία δεν μπορεί να είναι μελλοντική';
+    END IF;
+
     IF NEW.tipos_diagnosis = 'Εισοδος' AND NEW.icd IS NULL THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Η διάγνωση εισόδου απαιτεί κωδικό ICD';
+    END IF;
+
+    IF NEW.tipos_diagnosis = 'Εξοδος' THEN
+        SELECT imerominia INTO v_imer_eisagogis
+        FROM diagnosi
+        WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εισοδος';
+
+        IF v_imer_eisagogis IS NOT NULL AND NEW.imerominia < v_imer_eisagogis THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Η ημερομηνία εξόδου πρέπει να είναι μετά ή την ίδια μέρα με την εισαγωγή';
+        END IF;
+    END IF;
+END //
+
+
+-- =====================================================
+-- TRIGGER: diagnosi_after_insert_kostos
+-- Όταν μπει διάγνωση Εξοδου:
+--   1. Υπολογίζει και αποθηκεύει οριστικά το synoliko_kostos
+--   2. Η κλίνη ξαναγίνεται Διαθέσιμη
+-- =====================================================
+DROP TRIGGER IF EXISTS diagnosi_after_insert_kostos //
+
+CREATE TRIGGER diagnosi_after_insert_kostos
+AFTER INSERT ON diagnosi
+FOR EACH ROW
+BEGIN
+    DECLARE v_imer_eisagogis DATE;
+    DECLARE v_actual_days    INT;
+    DECLARE v_vasiko         DECIMAL(10,2);
+    DECLARE v_mdn            SMALLINT;
+    DECLARE v_imer_xrewsi    DECIMAL(8,2);
+    DECLARE v_kod_ken        VARCHAR(20);
+    DECLARE v_tmima_id       INT;
+    DECLARE v_ar_kliis       SMALLINT;
+    DECLARE v_kostos_ken     DECIMAL(10,2);
+    DECLARE v_kostos_exet    DECIMAL(10,2) DEFAULT 0;
+    DECLARE v_kostos_praxi   DECIMAL(10,2) DEFAULT 0;
+
+    IF NEW.tipos_diagnosis = 'Εξοδος' THEN
+
+        SELECT imerominia INTO v_imer_eisagogis
+        FROM diagnosi
+        WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εισοδος';
+
+        SELECT kod_ken, tmima_id, ar_kliis
+        INTO v_kod_ken, v_tmima_id, v_ar_kliis
+        FROM nosileia WHERE nosileia_id = NEW.nosileia_id;
+
+        SELECT vasiko_kostos, mdn, imer_xrewsi
+        INTO v_vasiko, v_mdn, v_imer_xrewsi
+        FROM ken WHERE kod_ken = v_kod_ken;
+
+        SET v_actual_days = DATEDIFF(NEW.imerominia, v_imer_eisagogis);
+
+        IF v_actual_days <= v_mdn THEN
+            SET v_kostos_ken = v_vasiko;
+        ELSE
+            SET v_kostos_ken = v_vasiko + (v_actual_days - v_mdn) * v_imer_xrewsi;
+        END IF;
+
+        SELECT COALESCE(SUM(kostos), 0) INTO v_kostos_exet
+        FROM exetasi WHERE nosileia_id = NEW.nosileia_id;
+
+        SELECT COALESCE(SUM(kostos), 0) INTO v_kostos_praxi
+        FROM iatrikipraxi WHERE nosileia_id = NEW.nosileia_id;
+
+        UPDATE nosileia SET synoliko_kostos = v_kostos_ken + v_kostos_exet + v_kostos_praxi
+        WHERE nosileia_id = NEW.nosileia_id;
+
+        UPDATE klini SET katastasi = 'Διαθέσιμη'
+        WHERE tmima_id = v_tmima_id AND ar_kliis = v_ar_kliis;
+
     END IF;
 END //
 
