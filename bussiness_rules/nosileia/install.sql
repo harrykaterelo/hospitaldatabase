@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 CREATE TABLE asthenis (
     amka                CHAR(11)        NOT NULL,
     patronymo           VARCHAR(50)     NULL,

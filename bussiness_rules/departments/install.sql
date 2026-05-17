@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 CREATE TABLE tmima (
     onoma           VARCHAR(100)    NOT NULL UNIQUE,
     perigrafi       TEXT            NULL,
