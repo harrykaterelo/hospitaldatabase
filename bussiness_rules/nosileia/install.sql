@@ -1,42 +1,8 @@
-CREATE TABLE asthenis (
-    amka                CHAR(11)        NOT NULL,
-    patronymo           VARCHAR(50)     NULL,
-    fylo VARCHAR(10) NOT NULL CHECK (fylo IN ('Αρσενικό', 'Θηλυκό')),
-    varos               DECIMAL(5,2)    NULL CHECK (varos > 0),
-    ypsos               DECIMAL(5,2)    NULL CHECK (ypsos > 0),
-    diefthinsi          VARCHAR(200)    NULL,
-    epangelma           VARCHAR(100)    NULL,
-    ypikoiotita         VARCHAR(50)     NULL,
-    asfalistikos_foreas VARCHAR(100)    NOT NULL,
-    PRIMARY KEY (amka),
-    FOREIGN KEY (amka) REFERENCES anthropos(amka)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE ektakti_epafi (
-    amka_astheni    CHAR(11)        NOT NULL,
-    tilefono        VARCHAR(15)     NOT NULL,
-    onoma           VARCHAR(50)     NOT NULL,
-    eponymo         VARCHAR(50)     NOT NULL,
-    email           VARCHAR(100)    NULL,
-    PRIMARY KEY (amka_astheni, tilefono),
-    FOREIGN KEY (amka_astheni) REFERENCES asthenis(amka)
-        ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE ken (
-    kod_ken         VARCHAR(20)     NOT NULL,
-    vasiko_kostos   DECIMAL(10,2)   NOT NULL CHECK (vasiko_kostos >= 0),
-    mdn             SMALLINT        NOT NULL CHECK (mdn > 0),
-    imer_xrewsi     DECIMAL(8,2)    NOT NULL CHECK (imer_xrewsi >= 0),
-    PRIMARY KEY (kod_ken)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE icd (
-    kodikos VARCHAR(10) NOT NULL,
-    perigrafi TEXT NOT NULL,
-    PRIMARY KEY (kodikos)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 
 CREATE TABLE nosileia (
     nosileia_id     INT             NOT NULL AUTO_INCREMENT,
