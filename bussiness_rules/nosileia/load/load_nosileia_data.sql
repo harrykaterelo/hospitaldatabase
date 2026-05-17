@@ -34,7 +34,7 @@ END //
 DELIMITER ;
 
 -- ── CALLs ──────────────────────────────────────────────────
-
+SET FOREIGN_KEY_CHECKS = 0;
 CALL add_nosileia('10647510164', 3, 7, 'A01A');
 CALL add_nosileia('58585910058', 4, 4, 'D01B');
 CALL add_nosileia('23234510023', 15, 10, 'B01A');
@@ -485,3 +485,4 @@ CALL add_nosileia('10757610175', 14, 1, 'A03B');
 CALL add_nosileia('10647510164', 15, 9, 'A02A');
 CALL add_nosileia('10297610129', 2, 3, 'E01B');
 CALL add_nosileia('40406510040', 8, 6, 'A02A');
+SET FOREIGN_KEY_CHECKS = 1;
