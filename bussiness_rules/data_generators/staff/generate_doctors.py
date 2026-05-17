@@ -2,29 +2,40 @@
 """
 generate_doctors.py
 ===================
-Generates SQL INSERT statements (via stored procedure calls) for ~570 doctors
-across 20 departments, following the staff_generation_rules document.
+Generates SQL INSERT statements for 570 doctors across 20 departments.
 
-Rules implemented
------------------
-* Total target: 570 doctors (safe mid-point of 550-600).
-* Vathmida distribution per department (20 departments):
-    - 1 Διευθυντής  (vathmida_id=2)  per dept  →  20 total
-    - 25% Ειδικευόμενοι (vathmida_id=1)           →  ~143 total
-    - Επιμελητής Α΄  (vathmida_id=3): fills gap   →  calculated
-    - Επιμελητής Β΄  (vathmida_id=4): remainder
-* Supervision:
-    - Ειδικευόμενοι  (is_supervised=1) → ALWAYS have a supervisor.
-      Supervisor must have can_supervise=1 (vathmida 2, 3, or 4 — but only
-      2 and 3 are confirmed can_supervise=1 from the schema; Επιμελητής Β΄
-      is also can_supervise=1 per the table).
-    - Διευθυντές (is_supervised=0) → NEVER have a supervisor.
-    - Επιμελητής Α΄ / Β΄ (is_supervised=NULL) → no supervisor assigned here
-      (NULL is safe for the trigger).
-* Department assignment:
-    - Not stored in add_doctor; a separate temp-table script handles it.
-* AMKA: 11-digit, unique.
-* ar_ad_is: medical licence number, unique.
+Main idea
+---------
+Instead of generating doctors globally and assigning departments randomly,
+this script generates a balanced doctor pool per department.
+
+Per-department distribution:
+    Departments 1–10:
+        1  Διευθυντής
+        8  Επιμελητές Α΄
+        12 Επιμελητές Β΄
+        8  Ειδικευόμενοι
+        = 29 doctors
+
+    Departments 11–20:
+        1  Διευθυντής
+        8  Επιμελητές Α΄
+        11 Επιμελητές Β΄
+        8  Ειδικευόμενοι
+        = 28 doctors
+
+Total:
+    10 * 29 + 10 * 28 = 570 doctors
+
+Why this is better for rotation
+-------------------------------
+Each department gets:
+    - exactly 1 Διευθυντής
+    - 9 senior doctors total, counting Διευθυντής + Επιμελητές Α΄
+    - 11–12 Επιμελητές Β΄
+    - 8 Ειδικευόμενοι
+
+This avoids departments randomly ending up with too few seniors.
 """
 
 import random
@@ -32,9 +43,17 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(__file__))
-from bussiness_rules.data_generators.staff.shared_data import (
-    gen_amka, gen_email, gen_phone, gen_date, gen_age,
-    pick_gender_name, sql_str, EIDIKOTITES,
+
+from shared_data import (
+    gen_amka,
+    gen_email,
+    gen_phone,
+    gen_date,
+    gen_age,
+    pick_gender_name,
+    sql_str,
+    Role,
+    EIDIKOTITES,
 )
 
 random.seed(42)
@@ -42,28 +61,34 @@ random.seed(42)
 # ── Config ────────────────────────────────────────────────────────────────────
 
 NUM_DEPARTMENTS = 20
-TARGET_TOTAL   = 570
 
-# Exact one Διευθυντής per dept
-NUM_DIRECTORS = NUM_DEPARTMENTS                                # 20
+# Per-department targets
+DIRECTORS_PER_DEPT = 1
+EPIM_A_PER_DEPT = 8
+EPIM_B_PER_DEPT_BASE = 11
+EIDIKEVOMENOI_PER_DEPT = 8
 
-# 25% Ειδικευόμενοι
-NUM_EIDIKEVOMENOI = round(TARGET_TOTAL * 0.25)                 # 142-143
-
-# Remaining split: more Επιμελητής Α΄ than Β΄ (Α΄ fills the "at least" rule)
-REMAINING = TARGET_TOTAL - NUM_DIRECTORS - NUM_EIDIKEVOMENOI
-NUM_EPIM_A = round(REMAINING * 0.55)
-NUM_EPIM_B = REMAINING - NUM_EPIM_A
+# Add +1 Επιμελητής Β΄ to the first 10 departments:
+# 10 departments * 29 doctors + 10 departments * 28 doctors = 570 total
+EXTRA_EPIM_B_DEPTS = 10
 
 # vathmida_id constants
 VATHMIDA_EIDIKEVOMENOS = 1
-VATHMIDA_DIRECTOR      = 2
-VATHMIDA_EPIM_A        = 3
-VATHMIDA_EPIM_B        = 4
+VATHMIDA_DIRECTOR = 2
+VATHMIDA_EPIM_A = 3
+VATHMIDA_EPIM_B = 4
+
+VATHMIDA_LABELS = {
+    VATHMIDA_EIDIKEVOMENOS: "Ειδικευόμενος",
+    VATHMIDA_DIRECTOR: "Διευθυντής",
+    VATHMIDA_EPIM_A: "Επιμελητής Α΄",
+    VATHMIDA_EPIM_B: "Επιμελητής Β΄",
+}
 
 # ── Licence number generator ──────────────────────────────────────────────────
 
 _used_ar_ad = set()
+
 
 def gen_ar_ad_is() -> str:
     while True:
@@ -72,73 +97,128 @@ def gen_ar_ad_is() -> str:
             _used_ar_ad.add(n)
             return n
 
-# ── Doctor record dataclass (plain dict) ─────────────────────────────────────
 
-def make_doctor(vathmida_id: int,
-                eidikotita: str,
-                amka_epoptis: str | None,
-                typos: str = "Ιατρός") -> dict:
+# ── Doctor generator ──────────────────────────────────────────────────────────
+
+def make_doctor(
+    vathmida_id: int,
+    eidikotita: str,
+    amka_epoptis: str | None,
+    typos: str = "Ιατρός",
+) -> dict:
     _, onoma, eponymo = pick_gender_name()
+
     return {
-        "amka":                 gen_amka(),
-        "onoma":                onoma,
-        "eponymo":              eponymo,
-        "ilikia":               gen_age(28, 65),
-        "email":                gen_email(onoma, eponymo),
-        "tilefono":             gen_phone(),
-        "imerominia_proslipsis":gen_date(2005, 2025),
-        "typos_proswpikou":     typos,
-        "ar_ad_is":             gen_ar_ad_is(),
-        "eidikotita":           eidikotita,
-        "vathmida_id":          vathmida_id,
-        "amka_epoptis":         amka_epoptis,
+        "amka": gen_amka(Role.DOCTOR),
+        "onoma": onoma,
+        "eponymo": eponymo,
+        "ilikia": gen_age(28, 65),
+        "email": gen_email(onoma, eponymo),
+        "tilefono": gen_phone(),
+        "imerominia_proslipsis": gen_date(2005, 2025),
+        "typos_proswpikou": typos,
+        "ar_ad_is": gen_ar_ad_is(),
+        "eidikotita": eidikotita,
+        "vathmida_id": vathmida_id,
+        "amka_epoptis": amka_epoptis,
     }
+
 
 # ── Generation logic ──────────────────────────────────────────────────────────
 
-def generate_doctors() -> list[dict]:
+def generate_doctors() -> tuple[list[dict], list[tuple[str, int]]]:
+    """
+    Returns:
+        doctors:
+            list of doctor dictionaries
+
+        doctor_depts:
+            list of (doctor_amka, tmima_id) tuples
+            used to generate tmp_doctor_dept.sql
+    """
+
     doctors: list[dict] = []
+    doctor_depts: list[tuple[str, int]] = []
 
-    # 1. Διευθυντές — no supervisor
-    directors: list[dict] = []
-    for _ in range(NUM_DIRECTORS):
-        d = make_doctor(VATHMIDA_DIRECTOR, random.choice(EIDIKOTITES), None)
-        directors.append(d)
-        doctors.append(d)
+    for dept_id in range(1, NUM_DEPARTMENTS + 1):
+        dept_doctors: list[dict] = []
 
-    # 2. Επιμελητές Α΄ — can supervise, no supervisor (is_supervised=NULL → omit)
-    epim_a_list: list[dict] = []
-    for _ in range(NUM_EPIM_A):
-        d = make_doctor(VATHMIDA_EPIM_A, random.choice(EIDIKOTITES), None)
-        epim_a_list.append(d)
-        doctors.append(d)
+        # ── 1. One Διευθυντής per department ────────────────────────────────
+        for _ in range(DIRECTORS_PER_DEPT):
+            d = make_doctor(
+                VATHMIDA_DIRECTOR,
+                random.choice(EIDIKOTITES),
+                None,
+            )
+            dept_doctors.append(d)
 
-    # 3. Επιμελητές Β΄ — can supervise, no supervisor (is_supervised=NULL → omit)
-    epim_b_list: list[dict] = []
-    for _ in range(NUM_EPIM_B):
-        d = make_doctor(VATHMIDA_EPIM_B, random.choice(EIDIKOTITES), None)
-        epim_b_list.append(d)
-        doctors.append(d)
+        # ── 2. Επιμελητές Α΄ per department ─────────────────────────────────
+        for _ in range(EPIM_A_PER_DEPT):
+            d = make_doctor(
+                VATHMIDA_EPIM_A,
+                random.choice(EIDIKOTITES),
+                None,
+            )
+            dept_doctors.append(d)
 
-    # Eligible supervisors: vathmida 2 (can_supervise=1), 3 (can_supervise=1), 4 (can_supervise=1)
-    eligible_supervisors = (
-        [d["amka"] for d in directors] +
-        [d["amka"] for d in epim_a_list] +
-        [d["amka"] for d in epim_b_list]
-    )
+        # ── 3. Επιμελητές Β΄ per department ─────────────────────────────────
+        epim_b_count = EPIM_B_PER_DEPT_BASE
 
-    # 4. Ειδικευόμενοι — MUST have a supervisor from the eligible list
-    for _ in range(NUM_EIDIKEVOMENOI):
-        supervisor_amka = random.choice(eligible_supervisors)
-        d = make_doctor(VATHMIDA_EIDIKEVOMENOS, random.choice(EIDIKOTITES), supervisor_amka)
-        doctors.append(d)
+        if dept_id <= EXTRA_EPIM_B_DEPTS:
+            epim_b_count += 1
 
-    return doctors
+        for _ in range(epim_b_count):
+            d = make_doctor(
+                VATHMIDA_EPIM_B,
+                random.choice(EIDIKOTITES),
+                None,
+            )
+            dept_doctors.append(d)
 
+        # Supervisors for Ειδικευόμενοι should come from the same department.
+        # This keeps supervision realistic and local.
+        eligible_supervisors = [
+            d["amka"]
+            for d in dept_doctors
+            if d["vathmida_id"] in {
+                VATHMIDA_DIRECTOR,
+                VATHMIDA_EPIM_A,
+                VATHMIDA_EPIM_B,
+            }
+        ]
+
+        if not eligible_supervisors:
+            raise RuntimeError(
+                f"No eligible supervisors found for department {dept_id}"
+            )
+
+        # ── 4. Ειδικευόμενοι per department ─────────────────────────────────
+        for _ in range(EIDIKEVOMENOI_PER_DEPT):
+            supervisor_amka = random.choice(eligible_supervisors)
+
+            d = make_doctor(
+                VATHMIDA_EIDIKEVOMENOS,
+                random.choice(EIDIKOTITES),
+                supervisor_amka,
+            )
+
+            dept_doctors.append(d)
+
+        # Add this department's doctors to the global output
+        for d in dept_doctors:
+            doctors.append(d)
+            doctor_depts.append((d["amka"], dept_id))
+
+    return doctors, doctor_depts
+
+
+# ── SQL rendering ─────────────────────────────────────────────────────────────
 
 def doctor_to_call(d: dict) -> str:
     """Render a CALL add_doctor(...) statement."""
+
     epoptis = sql_str(d["amka_epoptis"])
+
     lines = [
         "CALL add_doctor(",
         f"    {sql_str(d['amka'])},",
@@ -155,16 +235,21 @@ def doctor_to_call(d: dict) -> str:
         f"    {epoptis}",
         ");",
     ]
+
     return "\n".join(lines)
 
 
-# ── Dept-assignment temp table (distribution: 0.5 one dept, 0.4 two, 0.1 three) ──
+def gen_dept_temp_table(doctor_depts: list[tuple[str, int]]) -> str:
+    """
+    Generate a temporary doctor-department mapping table.
 
-def gen_dept_temp_table(doctors: list[dict]) -> str:
+    Unlike the previous version, this does NOT randomly assign doctors
+    to departments. The mapping was already decided during generation.
+    """
+
     lines = [
         "-- Temporary doctor-department mapping",
-        "-- Distribution: 50% → 1 dept, 40% → 2 depts, 10% → 3 depts",
-        "-- Import this yourself into proswpiko_anikei_se_tmima or a staging table.",
+        "-- Deterministic per-department distribution for stable shift rotation.",
         "",
         "DROP TEMPORARY TABLE IF EXISTS tmp_doctor_dept;",
         "CREATE TEMPORARY TABLE tmp_doctor_dept (",
@@ -175,49 +260,107 @@ def gen_dept_temp_table(doctors: list[dict]) -> str:
         "INSERT INTO tmp_doctor_dept (doctor_amka, tmima_id) VALUES",
     ]
 
-    value_rows = []
-    for d in doctors:
-        r = random.random()
-        if r < 0.5:
-            n_depts = 1
-        elif r < 0.9:
-            n_depts = 2
-        else:
-            n_depts = 3
-
-        depts = random.sample(range(1, NUM_DEPARTMENTS + 1), n_depts)
-        for dept in depts:
-            value_rows.append(f"    ({sql_str(d['amka'])}, {dept})")
+    value_rows = [
+        f"    ({sql_str(amka)}, {dept_id})"
+        for amka, dept_id in doctor_depts
+    ]
 
     lines.append(",\n".join(value_rows) + ";")
+
     return "\n".join(lines)
+
+
+# ── Validation helpers ────────────────────────────────────────────────────────
+
+def print_global_counts(doctors: list[dict]) -> None:
+    print(f"Generated {len(doctors)} doctors:")
+
+    counts = {}
+
+    for d in doctors:
+        vid = d["vathmida_id"]
+        counts[vid] = counts.get(vid, 0) + 1
+
+    for vid in sorted(counts):
+        label = VATHMIDA_LABELS[vid]
+        print(f"  vathmida_id={vid} ({label}): {counts[vid]}")
+
+
+def print_department_counts(
+    doctors: list[dict],
+    doctor_depts: list[tuple[str, int]],
+) -> None:
+    amka_to_doctor = {
+        d["amka"]: d
+        for d in doctors
+    }
+
+    dept_counts: dict[int, dict[int, int]] = {}
+
+    for amka, dept_id in doctor_depts:
+        d = amka_to_doctor[amka]
+        vid = d["vathmida_id"]
+
+        if dept_id not in dept_counts:
+            dept_counts[dept_id] = {}
+
+        dept_counts[dept_id][vid] = dept_counts[dept_id].get(vid, 0) + 1
+
+    print("\nPer-department doctor distribution:")
+
+    for dept_id in sorted(dept_counts):
+        counts = dept_counts[dept_id]
+
+        directors = counts.get(VATHMIDA_DIRECTOR, 0)
+        epim_a = counts.get(VATHMIDA_EPIM_A, 0)
+        epim_b = counts.get(VATHMIDA_EPIM_B, 0)
+        eid = counts.get(VATHMIDA_EIDIKEVOMENOS, 0)
+
+        seniors = directors + epim_a
+        total = directors + epim_a + epim_b + eid
+
+        print(
+            f"  Dept {dept_id:02d}: "
+            f"total={total}, "
+            f"Διευθυντές={directors}, "
+            f"Α΄={epim_a}, "
+            f"Β΄={epim_b}, "
+            f"Ειδικευόμενοι={eid}, "
+            f"seniors={seniors}"
+        )
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
-def main():
+def main() -> None:
     output_dir = os.path.dirname(__file__)
-    doctors = generate_doctors()
 
-    print(f"Generated {len(doctors)} doctors:")
-    counts = {}
-    for d in doctors:
-        counts[d["vathmida_id"]] = counts.get(d["vathmida_id"], 0) + 1
-    labels = {1: "Ειδικευόμενος", 2: "Διευθυντής", 3: "Επιμελητής Α΄", 4: "Επιμελητής Β΄"}
-    for vid, cnt in sorted(counts.items()):
-        print(f"  vathmida_id={vid} ({labels[vid]}): {cnt}")
+    doctors, doctor_depts = generate_doctors()
 
-    # ── SQL file 1: insert doctors ────────────────────────────────────────────
+    print_global_counts(doctors)
+    print_department_counts(doctors, doctor_depts)
+
+    # ── SQL file 1: insert doctors ───────────────────────────────────────────
     sql_path = os.path.join(output_dir, "insert_doctors.sql")
+
     with open(sql_path, "w", encoding="utf-8") as f:
         f.write("-- AUTO-GENERATED: insert_doctors.sql\n")
         f.write("-- Doctors are inserted ordered by vathmida so supervisors exist before supervisees.\n")
         f.write("-- Order: Διευθυντές → Επιμελητές Α΄ → Επιμελητές Β΄ → Ειδικευόμενοι\n\n")
         f.write("SET NAMES utf8mb4;\n\n")
 
-        # Sort: supervisors first
-        order = {2: 0, 3: 1, 4: 2, 1: 3}
-        sorted_docs = sorted(doctors, key=lambda d: order[d["vathmida_id"]])
+        # Supervisors first, Ειδικευόμενοι last
+        order = {
+            VATHMIDA_DIRECTOR: 0,
+            VATHMIDA_EPIM_A: 1,
+            VATHMIDA_EPIM_B: 2,
+            VATHMIDA_EIDIKEVOMENOS: 3,
+        }
+
+        sorted_docs = sorted(
+            doctors,
+            key=lambda d: order[d["vathmida_id"]],
+        )
 
         for d in sorted_docs:
             f.write(doctor_to_call(d))
@@ -225,16 +368,22 @@ def main():
 
     print(f"\nSQL written to: {sql_path}")
 
-    # ── SQL file 2: temp dept table ───────────────────────────────────────────
+    # ── SQL file 2: department mapping ───────────────────────────────────────
     dept_path = os.path.join(output_dir, "tmp_doctor_dept.sql")
+
     with open(dept_path, "w", encoding="utf-8") as f:
         f.write("-- AUTO-GENERATED: tmp_doctor_dept.sql\n")
         f.write("-- Run in your session; import tmp_doctor_dept into your real table yourself.\n\n")
         f.write("SET NAMES utf8mb4;\n\n")
-        f.write(gen_dept_temp_table(doctors))
+        f.write(gen_dept_temp_table(doctor_depts))
         f.write("\n\n")
         f.write("-- Preview:\n")
-        f.write("SELECT * FROM tmp_doctor_dept LIMIT 20;\n")
+        f.write("SELECT * FROM tmp_doctor_dept LIMIT 20;\n\n")
+        f.write("-- Per-department counts:\n")
+        f.write("SELECT tmima_id, COUNT(*) AS doctors_in_dept\n")
+        f.write("FROM tmp_doctor_dept\n")
+        f.write("GROUP BY tmima_id\n")
+        f.write("ORDER BY tmima_id;\n")
 
     print(f"Dept mapping written to: {dept_path}")
 

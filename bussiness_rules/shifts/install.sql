@@ -9,7 +9,8 @@ CREATE TABLE efimeria_proswpiko (
             ON DELETE CASCADE ON UPDATE CASCADE,
         FOREIGN KEY (amka_proswpiko) REFERENCES proswpiko(amka)
            ON DELETE CASCADE ON UPDATE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ) 
+    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE efimeria_requirements (
     iatros_max_monthly_ef_count INT NOT NULL DEFAULT 15,

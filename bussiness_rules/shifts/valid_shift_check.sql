@@ -31,9 +31,9 @@ BEGIN
     LIMIT 1;
 
     SELECT 
-        COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'iatros' THEN 1 ELSE 0 END), 0),
-        COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'nosileutis' THEN 1 ELSE 0 END), 0),
-        COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'dioikitikos' THEN 1 ELSE 0 END), 0)
+        COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'Ιατρός' THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'Νοσηλευτής' THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'Διοικητικό' THEN 1 ELSE 0 END), 0)
     INTO    
         v_doctors,
         v_nurses,
@@ -44,6 +44,7 @@ BEGIN
     WHERE ep.tmima = p_tmima
       AND ep.imerominia = p_imerominia
       AND ep.vardia = p_vardia;
+    
 
     IF v_doctors < doctor_min_count
        OR v_nurses < nurse_min_count
@@ -52,7 +53,7 @@ BEGIN
     END IF;
 
     SELECT
-        COALESCE(SUM(CASE WHEN v.require_senior_in_shift = 1 THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN v.requires_senior_in_shift = 1 THEN 1 ELSE 0 END), 0),
         COALESCE(SUM(CASE WHEN v.can_cover_specialist_shift = 1 THEN 1 ELSE 0 END), 0)
     INTO 
         docs_that_require_senior_in_shift,
@@ -60,8 +61,8 @@ BEGIN
     FROM efimeria_proswpiko ep
     JOIN iatros i
         ON ep.amka_proswpiko = i.amka
-    JOIN vathmida v
-        ON i.vathmida = v.vathmida
+    JOIN vathmida_iatrou v
+        ON i.vathmida= v.vathmida_id
     WHERE ep.tmima = p_tmima
       AND ep.imerominia = p_imerominia
       AND ep.vardia = p_vardia;

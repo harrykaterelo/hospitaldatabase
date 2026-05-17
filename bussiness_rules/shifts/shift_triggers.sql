@@ -17,12 +17,12 @@ BEGIN
     DECLARE v_hours_since_last INT;
 
     DECLARE v_consecutive_same_type INT DEFAULT 0;
-
+    DECLARE msg VARCHAR(255);
     /*
       Get limits/settings for the new shift and staff type
     */
     SELECT
-        CASE
+        COALESCE(CASE
             WHEN p.typos_proswpikou = 'Ιατρός'
                 THEN er.iatros_max_monthly_ef_count
             WHEN p.typos_proswpikou = 'Νοσηλευτής'
@@ -30,7 +30,7 @@ BEGIN
             WHEN p.typos_proswpikou = 'Διοικητικό'
                 THEN er.dioikitiko_max_monthly_ef_count
             ELSE 0
-        END,
+        END,100000),
         v.endiamesi_ora_anapausis_hours,
         v.epitreptes_sinexomenes_vardies,
         
@@ -60,23 +60,35 @@ BEGIN
       AND MONTH(e.imerominia) = MONTH(NEW.imerominia);
 
     IF v_monthly_count >= v_max_allowed THEN
+        set msg  = 'Έχει ξεπεραστεί το μηνιαίο όριο εφημεριών';
+        call add_error(msg);
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Έχει ξεπεραστεί το μηνιαίο όριο εφημεριών';
+        SET MESSAGE_TEXT = msg;
     END IF;
 
 
     /*
       2. Get most recent previous shift end
     */
-    SELECT TIMESTAMP(e.imerominia, v.vardia_ora_lixis)
-    INTO v_last_shift_end
-    FROM efimeria_proswpiko e
-    JOIN vardia v
-        ON v.vardia_id = e.vardia
-    WHERE e.amka_proswpiko = NEW.amka_proswpiko
-      AND e.imerominia <= NEW.imerominia
-    ORDER BY e.imerominia DESC, v.vardia_ora_lixis DESC
-    LIMIT 1;
+    SELECT
+    CASE
+        WHEN v.vardia_ora_lixis <= v.vardia_ora_ekkinisis
+            THEN TIMESTAMP(DATE_ADD(e.imerominia, INTERVAL 1 DAY), v.vardia_ora_lixis)
+        ELSE TIMESTAMP(e.imerominia, v.vardia_ora_lixis)
+    END
+INTO v_last_shift_end
+FROM efimeria_proswpiko e
+JOIN vardia v
+    ON v.vardia_id = e.vardia
+WHERE e.amka_proswpiko = NEW.amka_proswpiko
+  AND TIMESTAMP(e.imerominia, v.vardia_ora_ekkinisis) < v_new_shift_start
+ORDER BY
+    CASE
+        WHEN v.vardia_ora_lixis <= v.vardia_ora_ekkinisis
+            THEN TIMESTAMP(DATE_ADD(e.imerominia, INTERVAL 1 DAY), v.vardia_ora_lixis)
+        ELSE TIMESTAMP(e.imerominia, v.vardia_ora_lixis)
+    END DESC
+LIMIT 1;
 
 
     /*
@@ -88,6 +100,7 @@ BEGIN
             TIMESTAMPDIFF(HOUR, v_last_shift_end, v_new_shift_start);
 
         IF v_hours_since_last < v_rest_hours THEN
+            call add_error('Δεν υπάρχει το ελάχιστο διάστημα ανάπαυσης μεταξύ των βαρδιών');
             SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Δεν υπάρχει το ελάχιστο διάστημα ανάπαυσης μεταξύ των βαρδιών';
         END IF;
@@ -102,25 +115,32 @@ BEGIN
       If the latest N previous shifts are the same type as the new one,
       then adding this new one exceeds the allowed limit.
     */
-    IF v_allowed_consecutive IS NOT NULL THEN 
+    IF v_allowed_consecutive IS NOT NULL THEN
+
     SELECT COUNT(*)
     INTO v_consecutive_same_type
-    FROM (
-        SELECT v.vardia_id
-        FROM efimeria_proswpiko e
-        JOIN vardia v
-            ON v.vardia_id = e.vardia
-        WHERE e.amka_proswpiko = NEW.amka_proswpiko
-          AND e.imerominia < NEW.imerominia
-        ORDER BY e.imerominia DESC
-        LIMIT 3
-    ) AS recent_shifts
-    WHERE recent_shifts.vardia_id = NEW.vardia;
+    FROM efimeria_proswpiko e
+    JOIN vardia v
+        ON v.vardia_id = e.vardia
+    WHERE e.amka_proswpiko = NEW.amka_proswpiko
+      AND e.vardia = NEW.vardia
+      AND e.imerominia IN (
+          DATE_SUB(NEW.imerominia, INTERVAL 1 DAY),
+          DATE_SUB(NEW.imerominia, INTERVAL 2 DAY),
+          DATE_SUB(NEW.imerominia, INTERVAL 3 DAY)
+      );
 
     IF v_consecutive_same_type >= v_allowed_consecutive THEN
+        SET msg = CONCAT(
+            'Έχει ξεπεραστεί το όριο συνεχόμενων νυχτερινών βαρδιών για ΑΜΚΑ ',
+            NEW.amka_proswpiko
+        );
+        call add_error(msg);
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Έχει ξεπεραστεί το όριο συνεχόμενων βαρδιών ίδιου τύπου';
+        SET MESSAGE_TEXT = msg; 
     END IF;
+
+
 
     END IF;
 END//
