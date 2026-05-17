@@ -22,13 +22,10 @@ BEGIN
     SET v_new_end = DATE_ADD(NEW.imerominia_wra, INTERVAL NEW.diarkeia_lepta MINUTE);
 
     -- 1. Ημερομηνία επέμβασης εντός νοσηλείας
-    SELECT imerominia INTO v_imer_eisagogis
-    FROM diagnosi
-    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εισοδος';
-
-    SELECT imerominia INTO v_imer_exodou
-    FROM diagnosi
-    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εξοδος';
+    SELECT imerominia_eisodou, imerominia_eksodou
+    INTO v_imer_eisagogis, v_imer_exodou
+    FROM nosileia
+    WHERE nosileia_id = NEW.nosileia_id;
 
     IF DATE(NEW.imerominia_wra) < v_imer_eisagogis THEN
         SIGNAL SQLSTATE '45000'
