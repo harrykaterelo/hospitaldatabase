@@ -32,6 +32,12 @@ CREATE TABLE ken (
     PRIMARY KEY (kod_ken)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE icd (
+    kodikos VARCHAR(10) NOT NULL,
+    perigrafi TEXT NOT NULL,
+    PRIMARY KEY (kodikos)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE nosileia (
     nosileia_id     INT             NOT NULL AUTO_INCREMENT,
     amka_astheni    CHAR(11)        NOT NULL,
@@ -47,7 +53,7 @@ CREATE TABLE nosileia (
     FOREIGN KEY (kod_ken) REFERENCES ken(kod_ken)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
+
 CREATE TABLE diagnosi (
     nosileia_id     INT             NOT NULL,
     icd             VARCHAR(10)     NULL,
@@ -60,12 +66,6 @@ CREATE TABLE diagnosi (
     FOREIGN KEY (nosileia_id) REFERENCES nosileia(nosileia_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- CREATE TABLE icd (
-    kodikos VARCHAR(10) NOT NULL,
-    perigrafi TEXT NOT NULL,
-    PRIMARY KEY (kodikos)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 
 CREATE TABLE axiologisi (
     nosileia_id                 INT             NOT NULL,
@@ -73,12 +73,12 @@ CREATE TABLE axiologisi (
     poiotita_nosileft_frontidas TINYINT         NOT NULL CHECK (poiotita_nosileft_frontidas BETWEEN 1 AND 5),
     kathariotita                TINYINT         NOT NULL CHECK (kathariotita BETWEEN 1 AND 5),
     fagito                      TINYINT         NOT NULL CHECK (fagito BETWEEN 1 AND 5),
-    synolikí_empeiria           TINYINT         NOT NULL CHECK (synolikí_empeiria BETWEEN 1 AND 5),
+    synoliki_empeiria           TINYINT         NOT NULL CHECK (synoliki_empeiria BETWEEN 1 AND 5),
     PRIMARY KEY (nosileia_id),
     FOREIGN KEY (nosileia_id) REFERENCES nosileia(nosileia_id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
+
 CREATE TABLE exetasi (
     nosileia_id         INT             NOT NULL,
     kodikos             VARCHAR(20)     NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE exetasi (
     FOREIGN KEY (amka_iatrou) REFERENCES iatros(amka)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
+
 CREATE TABLE xwros_epembasis (
     kodikos         VARCHAR(20)     NOT NULL,
     typos           VARCHAR(30)     NOT NULL
@@ -122,7 +122,7 @@ CREATE TABLE iatrikipraxi (
     FOREIGN KEY (kod_xwrou) REFERENCES xwros_epembasis(kodikos)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
- 
+
 CREATE TABLE praxi_voithos (
     kod_praxis      VARCHAR(20)     NOT NULL,
     amka_voithou    CHAR(11)        NOT NULL,

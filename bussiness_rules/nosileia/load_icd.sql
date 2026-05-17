@@ -1,4 +1,4 @@
-LOAD DATA LOCAL INFILE '/Users/hariskaterelos/Documents/hospital-db-management/bussiness_rules/data/4.2 Κωδικοί ICD-10 15-12-2011 2.csv'
+LOAD DATA LOCAL INFILE 'C:/Users/giann/Documents/hospitaldatabase/bussiness_rules/data/icd10.csv'
 INTO TABLE icd
 CHARACTER SET utf8mb4
 FIELDS TERMINATED BY ';'

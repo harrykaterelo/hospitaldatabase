@@ -27,7 +27,7 @@ BEGIN
 
     START TRANSACTION;
 
-    INSERT INTO anthropos (amka, onoma, eponymo, ilikia, email, tilefono)
+    INSERT IGNORE INTO anthropos (amka, onoma, eponymo, ilikia, email, tilefono)
     VALUES (p_amka, p_onoma, p_eponymo, p_ilikia, p_email, p_tilefono);
 
     INSERT INTO asthenis (amka, patronymo, fylo, varos, ypsos, diefthinsi, epangelma, ypikoiotita, asfalistikos_foreas)
