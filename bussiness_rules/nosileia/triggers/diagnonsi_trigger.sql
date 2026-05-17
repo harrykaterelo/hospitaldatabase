@@ -3,6 +3,7 @@
 -- Η διάγνωση εισόδου απαιτεί υποχρεωτικά κωδικό ICD.
 -- Η ημερομηνία εξόδου πρέπει να είναι >= εισόδου.
 -- =====================================================
+DELIMITER //
 DROP TRIGGER IF EXISTS diagnosi_insert_trigger //
 
 CREATE TRIGGER diagnosi_insert_trigger
