@@ -49,8 +49,9 @@ import os
 
 # ── Config (mirrors util.py) ──────────────────────────────────────────────────
 
-START_DATE = datetime(2023, 1, 1, 10, 30)
-END_DATE   = datetime(2026, 1, 1, 10, 30)
+START_DATE = datetime(2026,1,2,10,30)
+END_DATE = datetime(2026,5,15,10,30)
+
 
 IATROS_MAX_MONTHLY      = 15
 NOSILEUTIS_MAX_MONTHLY  = 20
