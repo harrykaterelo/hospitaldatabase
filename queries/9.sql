@@ -2,19 +2,15 @@ CREATE OR REPLACE VIEW query_9 AS
 WITH durations AS (
     SELECT
         n.amka_astheni,
-        YEAR(d_in.imerominia) AS etos,
+        YEAR(n.imerominia_eisodou) AS etos,
         DATEDIFF(
             LEAST(
-                COALESCE(d_out.imerominia, CURDATE()),
-                DATE(CONCAT(YEAR(d_in.imerominia), '-12-31'))
+                COALESCE(n.imerominia_eksodou, CURDATE()),
+                DATE(CONCAT(YEAR(n.imerominia_eisodou), '-12-31'))
             ),
-            d_in.imerominia
+            n.imerominia_eisodou
         ) AS diarkeia_imeron
     FROM nosileia n
-    JOIN diagnosi d_in  ON d_in.nosileia_id  = n.nosileia_id
-                       AND d_in.tipos_diagnosis  = 'Εισοδος'
-    LEFT JOIN diagnosi d_out ON d_out.nosileia_id = n.nosileia_id
-                            AND d_out.tipos_diagnosis = 'Εξοδος'
 ),
 per_year AS (
     SELECT

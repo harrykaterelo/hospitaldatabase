@@ -11,13 +11,10 @@ BEGIN
     DECLARE v_imer_eisagogis DATE;
     DECLARE v_imer_exodou    DATE;
 
-    SELECT imerominia INTO v_imer_eisagogis
-    FROM diagnosi
-    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εισοδος';
-
-    SELECT imerominia INTO v_imer_exodou
-    FROM diagnosi
-    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εξοδος';
+    SELECT imerominia_eisodou, imerominia_eksodou
+    INTO v_imer_eisagogis, v_imer_exodou
+    FROM nosileia
+    WHERE nosileia_id = NEW.nosileia_id;
 
     IF NEW.imerominia < v_imer_eisagogis THEN
         SIGNAL SQLSTATE '45000'

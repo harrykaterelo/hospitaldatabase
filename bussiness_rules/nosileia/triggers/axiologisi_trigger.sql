@@ -8,13 +8,10 @@ CREATE TRIGGER axiologisi_insert_trigger
 BEFORE INSERT ON axiologisi
 FOR EACH ROW
 BEGIN
-    DECLARE v_exodos INT DEFAULT 0;
-
-    SELECT COUNT(*) INTO v_exodos
-    FROM diagnosi
-    WHERE nosileia_id = NEW.nosileia_id AND tipos_diagnosis = 'Εξοδος';
-
-    IF v_exodos = 0 THEN
+    IF NOT EXISTS (
+        SELECT 1 FROM nosileia
+        WHERE nosileia_id = NEW.nosileia_id AND imerominia_eksodou IS NOT NULL
+    ) THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Η αξιολόγηση μπορεί να γίνει μόνο μετά την έξοδο του ασθενούς';
     END IF;
