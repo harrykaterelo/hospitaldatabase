@@ -13,6 +13,7 @@ BEGIN
             amka_kyriou_xeirourgou,
             COUNT(*) AS arithmos_epemvaseon
         FROM iatrikipraxi
+        WHERE katigoria = 'Χειρουργική'
         GROUP BY amka_kyriou_xeirourgou
     )
     SELECT
