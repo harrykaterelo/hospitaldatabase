@@ -20,6 +20,7 @@ ranked AS (
         ROW_NUMBER() OVER (PARTITION BY p.amka ORDER BY RAND()) AS rn
     FROM patient_allergy_count p
     CROSS JOIN drastiki_ousia o
+    WHERE p.num_allergies > 0
 )
 SELECT amka, ousia_id
 FROM ranked

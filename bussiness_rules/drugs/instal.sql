@@ -34,6 +34,7 @@ CREATE TABLE allergy (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE syntagografisi (
+    nosileia_id     INT             NOT NULL,       
     kod_ema         INT             NOT NULL,
     amka_iatrou     CHAR(11)        NOT NULL,
     amka_astheni    CHAR(11)        NOT NULL,
@@ -48,5 +49,7 @@ CREATE TABLE syntagografisi (
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (amka_astheni) REFERENCES asthenis(amka)
         ON DELETE RESTRICT ON UPDATE CASCADE,
-    CHECK (imer_liksis IS NULL OR imer_liksis >= imer_enarksis)
+    CHECK (imer_liksis IS NULL OR imer_liksis >= imer_enarksis),
+    FOREIGN KEY (nosileia_id) REFERENCES nosileia(nosileia_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
