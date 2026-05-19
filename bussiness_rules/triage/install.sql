@@ -7,6 +7,25 @@
 -- Αποτέλεσμα: 'Αποχώρηση' (οδηγίες & έξοδος) ή
 --             'Παραπομπή'  (παραπομπή για νοσηλεία)
 -- ============================================================
+CREATE TABLE efimeria_se_kathikon_triage (
+    tmima INT NOT NULL DEFAULT 20,
+    imerominia DATE NOT NULL,
+    vardia INT NOT NULL,
+    amka_proswpiko CHAR(11) NOT NULL,
+
+    PRIMARY KEY (tmima, imerominia, vardia, amka_proswpiko),
+
+    
+
+    FOREIGN KEY (tmima, imerominia, vardia, amka_proswpiko)
+        REFERENCES efimeria_proswpiko (
+            tmima,
+            imerominia,
+            vardia,
+            amka_proswpiko
+        )
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE dialogistoixeiwn (
     id_dialogis     INT             NOT NULL AUTO_INCREMENT,
