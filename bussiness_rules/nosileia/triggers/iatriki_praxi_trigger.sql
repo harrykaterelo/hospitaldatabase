@@ -122,10 +122,7 @@ BEGIN
     SELECT typos_proswpikou INTO v_typos
     FROM proswpiko WHERE amka = NEW.amka_voithou;
 
-    IF v_typos = 'Διοικητικό' THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = 'Το διοικητικό προσωπικό δεν μπορεί να είναι βοηθός σε επέμβαση';
-    END IF;
+    
 
     -- 3. Αν ο βοηθός είναι ιατρός, δεν επιτρέπεται να είναι κύριος αλλού
     IF v_typos = 'Ιατρός' THEN
