@@ -32,6 +32,25 @@ CREATE TABLE efimeria (
             ON DELETE CASCADE ON UPDATE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE efimeria_se_kathikon_triage (
+    tmima INT NOT NULL DEFAULT 20,
+    imerominia DATE NOT NULL,
+    vardia INT NOT NULL,
+    amka_proswpiko CHAR(11) NOT NULL,
+
+    PRIMARY KEY (tmima, imerominia, vardia, amka_proswpiko),
+
+    
+
+    FOREIGN KEY (tmima, imerominia, vardia, amka_proswpiko)
+        REFERENCES efimeria_proswpiko (
+            tmima,
+            imerominia,
+            vardia,
+            amka_proswpiko
+        )
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE TABLE vardia (
     vardia_id INT AUTO_INCREMENT PRIMARY KEY,
     vardia_onoma VARCHAR(15) NOT NULL
