@@ -11,7 +11,7 @@ BEGIN
     SELECT COUNT(*)
     INTO v_allergy_conflict
     FROM farmako_drastiki fd
-    JOIN allergy a ON a.kod_do = fd.kod_do
+    JOIN allergy a ON a.ousia_id = fd.ousia_id
     WHERE fd.kod_ema       = NEW.kod_ema
       AND a.amka_astheni   = NEW.amka_astheni;
 
@@ -21,4 +21,4 @@ BEGIN
     END IF;
 END //
 
-
+DELIMITER ;
