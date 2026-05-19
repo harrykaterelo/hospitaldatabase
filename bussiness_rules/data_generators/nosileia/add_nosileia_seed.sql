@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS add_nosileia_from_seed //

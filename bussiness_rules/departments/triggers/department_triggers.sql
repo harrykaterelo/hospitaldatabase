@@ -65,7 +65,7 @@ BEGIN
         SELECT v.can_run_department
         INTO mporei_na_dieftinei
         FROM iatros AS i
-        JOIN vathmida AS v
+        JOIN vathmida_iatrou AS v
             ON i.vathmida = v.vathmida_id
         WHERE i.amka = NEW.amka_proswpikou;
 
@@ -126,6 +126,8 @@ DELIMITER ;
 
 -- END //
 
+DELIMITER //
+
 DROP TRIGGER IF EXISTS tmima_insert_trigger //
 
 CREATE TRIGGER tmima_insert_trigger
@@ -169,3 +171,4 @@ IF NEW.amka_dieftinti IS NOT NULL THEN
     END IF;
 END IF;
 END //
+DELIMITER ;

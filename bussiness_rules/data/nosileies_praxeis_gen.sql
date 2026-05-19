@@ -40,7 +40,7 @@ WITH RECURSIVE nums AS (
     UNION ALL
     SELECT n + 1
     FROM nums
-    WHERE n < 10
+    WHERE n < 30
     
     
 ),
@@ -285,9 +285,9 @@ SELECT
     k.ar_kliis,
     n.kodikos_ken,
     p.datetime_value,
-    p.datetime_exagogis,
+    CASE WHEN p.datetime_exagogis > CURDATE() THEN NULL ELSE p.datetime_exagogis END AS datetime_exagogis,
     d.diagnosi_eisodou,
-    d.diagnosi_exodou,
+    CASE WHEN p.datetime_exagogis > CURDATE() THEN NULL ELSE d.diagnosi_exodou END AS diagnosi_exodou,
     p.hasIatrikiPraxi,
     p.iatriki_praxi_date,
     p.amka_iatrou,
