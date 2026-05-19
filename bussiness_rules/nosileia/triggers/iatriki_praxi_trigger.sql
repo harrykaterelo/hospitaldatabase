@@ -6,6 +6,8 @@
 --   3. Ο κύριος χειρουργός δεν συμμετέχει σε άλλη επέμβαση (ως κύριος)
 --   4. Ο κύριος χειρουργός δεν είναι βοηθός σε άλλη επέμβαση την ίδια ώρα
 -- =====================================================
+DELIMITER //
+
 DROP TRIGGER IF EXISTS iatrikipraxi_insert_trigger //
 
 CREATE TRIGGER iatrikipraxi_insert_trigger
@@ -154,3 +156,4 @@ BEGIN
         SET MESSAGE_TEXT = 'Ο βοηθός συμμετέχει ήδη σε άλλη επέμβαση την ίδια ώρα';
     END IF;
 END //
+DELIMITER ;

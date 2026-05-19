@@ -1,3 +1,5 @@
+    SET NAMES utf8mb4;
+
     DELIMITER //
 
     DROP PROCEDURE IF EXISTS load_generated_full_seed //
@@ -51,13 +53,6 @@
 
         DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
 
-        DECLARE EXIT HANDLER FOR SQLEXCEPTION
-        BEGIN
-            ROLLBACK;
-            CLOSE cur;
-            RESIGNAL;
-        END;
-
         OPEN cur;
 
         read_loop: LOOP
@@ -81,9 +76,15 @@
                 LEAVE read_loop;
             END IF;
 
-            START TRANSACTION;
+            BEGIN
+                DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+                BEGIN
+                    ROLLBACK;
+                END;
 
-            CALL add_nosileia_from_seed(
+                START TRANSACTION;
+
+                CALL add_nosileia_from_seed(
                 v_amka_astheni,
                 v_tmima_id,
                 v_ar_kliis,
@@ -96,7 +97,7 @@
                 v_final_ar_kliis
             );
 
-            IF v_has_iatriki_praxi = 1 THEN
+            IF v_has_iatriki_praxi = 1 AND v_amka_iatrou IS NOT NULL THEN
 
                 /*
                 Fixed/generated values for missing iatrikipraxi columns.
@@ -152,6 +153,7 @@
             END IF;
 
             COMMIT;
+            END;
 
         END LOOP;
 
