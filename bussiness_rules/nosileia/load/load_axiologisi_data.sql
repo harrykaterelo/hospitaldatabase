@@ -4,7 +4,7 @@
 -- ============================================================
 
 INSERT INTO axiologisi
-    (nosileia_id, poiotita_iatr_frontidas, poiotita_nosileft_frontidas, kathariotita, fagito, synolikí_empeiria)
+    (nosileia_id, poiotita_iatr_frontidas, poiotita_nosileft_frontidas, kathariotita, fagito, synoliki_empeiria)
 VALUES
     (1, 3, 4, 4, 5, 4),
     (3, 5, 3, 3, 3, 1),
