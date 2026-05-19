@@ -21,7 +21,7 @@ ranked AS (
         RANK() OVER (ORDER BY num_iatrikes DESC) AS rnk
     FROM allIatroiMeEpemvaseisArithmo
 ),
-keepMax AS (
+keepMax AS (    
     SELECT MAX(num_iatrikes) AS max_num_iatrikes
     FROM allIatroiMeEpemvaseisArithmo
 )
