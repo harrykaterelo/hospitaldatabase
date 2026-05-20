@@ -1,10 +1,4 @@
-mysql> source /Users/hariskaterelos/Documents/hospital-db-management/queries/3.sql
-ERROR 1146 (42S02): Table 'hospitaldb.trexon_kostos_nosileia' doesn't exist
-mysql> source /Users/hariskaterelos/Documents/hospital-db-management/bussiness_rules/nosileia/views/trexon_kostos_view.sql
-Query OK, 0 rows affected (0.00 sec)
 
-mysql> source /Users/hariskaterelos/Documents/hospital-db-management/queries/3.sql
-Query OK, 0 rows affected (0.00 sec)
 
 mysql> select * from query_3;
 +--------------+----------+-------+--------------+
@@ -52,4 +46,3 @@ mysql> select * from query_3;
 +--------------+----------+-------+--------------+
 39 rows in set (0.01 sec)
 
-mysql> tee /Users/hariskaterelos/Documents/hospital-db-management/sql/Q2_out.txt;

@@ -1,14 +1,4 @@
-mysql> source /Users/hariskaterelos/Documents/hospital-db-management/queries/2.sql
-Query OK, 0 rows affected (0.00 sec)
 
-ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':
-    FROM iatros i
-    LEFT JOIN efimeries ef  ON ef.amka_proswpiko = i.amka
-  ' at line 19
-mysql> source /Users/hariskaterelos/Documents/hospital-db-management/queries/2.sql
-Query OK, 0 rows affected, 1 warning (0.00 sec)
-
-Query OK, 0 rows affected (0.00 sec)
 
 mysql> select eidikotita from iatros limit 1;
 +--------------------+
@@ -49,4 +39,3 @@ mysql> call query_2('Παθολογία');
 
 Query OK, 0 rows affected (0.17 sec)
 
-mysql> tee /Users/hariskaterelos/Documents/hospital-db-management/sql/Q1_out.txt;
