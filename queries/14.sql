@@ -1,3 +1,4 @@
+CREATE OR REPLACE VIEW query_14 as 
 WITH first_table AS (
     SELECT 
         LEFT(d.icd, 1) AS icd_category,

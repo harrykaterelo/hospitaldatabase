@@ -1,0 +1,52 @@
+mysql> source /Users/hariskaterelos/Documents/hospital-db-management/queries/2.sql
+Query OK, 0 rows affected (0.00 sec)
+
+ERROR 1064 (42000): You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near ':
+    FROM iatros i
+    LEFT JOIN efimeries ef  ON ef.amka_proswpiko = i.amka
+  ' at line 19
+mysql> source /Users/hariskaterelos/Documents/hospital-db-management/queries/2.sql
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select eidikotita from iatros limit 1;
++--------------------+
+| eidikotita         |
++--------------------+
+| Παθολογία          |
++--------------------+
+1 row in set (0.00 sec)
+
+mysql> call query_2('Παθολογία');
++-------------+--------------------+---------------+---------------------+
+| amka        | eidikotita         | eixe_efimeria | arithmos_epemvaseon |
++-------------+--------------------+---------------+---------------------+
+| 10000000001 | Παθολογία          | Ναι           |                   2 |
+| 10000000027 | Παθολογία          | Ναι           |                   0 |
+| 10000000090 | Παθολογία          | Ναι           |                   1 |
+| 10000000137 | Παθολογία          | Ναι           |                   2 |
+| 10000000178 | Παθολογία          | Ναι           |                   2 |
+| 10000000185 | Παθολογία          | Ναι           |                   1 |
+| 10000000196 | Παθολογία          | Ναι           |                   0 |
+| 10000000253 | Παθολογία          | Ναι           |                   0 |
+| 10000000258 | Παθολογία          | Ναι           |                   2 |
+| 10000000260 | Παθολογία          | Ναι           |                   2 |
+| 10000000318 | Παθολογία          | Ναι           |                   3 |
+| 10000000347 | Παθολογία          | Ναι           |                   4 |
+| 10000000350 | Παθολογία          | Ναι           |                   1 |
+| 10000000352 | Παθολογία          | Ναι           |                   1 |
+| 10000000370 | Παθολογία          | Ναι           |                   2 |
+| 10000000418 | Παθολογία          | Ναι           |                   3 |
+| 10000000433 | Παθολογία          | Ναι           |                   0 |
+| 10000000450 | Παθολογία          | Ναι           |                   6 |
+| 10000000506 | Παθολογία          | Ναι           |                   1 |
+| 10000000508 | Παθολογία          | Ναι           |                   2 |
+| 10000000511 | Παθολογία          | Ναι           |                   0 |
+| 10000000534 | Παθολογία          | Ναι           |                   2 |
++-------------+--------------------+---------------+---------------------+
+22 rows in set (0.17 sec)
+
+Query OK, 0 rows affected (0.17 sec)
+
+mysql> tee /Users/hariskaterelos/Documents/hospital-db-management/sql/Q1_out.txt;

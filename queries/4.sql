@@ -23,7 +23,7 @@ BEGIN
 END //
 DELIMITER ;
 
-ANALYZE
+EXPLAIN
 SELECT
     COUNT(*)                                     AS plithos_axiologiseon,
     ROUND(AVG(a.poiotita_iatr_frontidas), 2)     AS mo_poiotita_iatr_frontidas,
@@ -40,7 +40,7 @@ FROM (
 JOIN axiologisi a ON a.nosileia_id = ni.nosileia_id;
 
 
-ANALYZE
+EXPLAIN
 SELECT
     COUNT(*)                                     AS plithos_axiologiseon,
     ROUND(AVG(a.poiotita_iatr_frontidas), 2)     AS mo_poiotita_iatr_frontidas,

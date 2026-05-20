@@ -19,7 +19,7 @@ BEGIN
         i.amka,
         i.eidikotita,
         IF(ef.amka_proswpiko IS NOT NULL, 'Ναι', 'Όχι') AS eixe_efimeria,
-        COALESCE(ep.arithmos_epemvaseon, 0)             AS arithmos_epemvaseon:
+        COALESCE(ep.arithmos_epemvaseon, 0)             AS arithmos_epemvaseon
     FROM iatros i
     LEFT JOIN efimeries ef  ON ef.amka_proswpiko = i.amka
     LEFT JOIN epemvaseis ep ON ep.amka_kyriou_xeirourgou = i.amka

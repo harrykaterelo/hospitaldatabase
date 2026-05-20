@@ -1,0 +1,14 @@
+mysql> source /Users/hariskaterelos/Documents/hospital-db-management/queries/10.sql
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from query_10;
++------------------------+----------------+-----------+-----------+
+| ousia_1                | ousia_2        | frequency | pair_rank |
++------------------------+----------------+-----------+-----------+
+| Ibuprofen              | Paracetamol    |         5 |         1 |
+| Azithromycin Dihydrate | Ibuprofen      |         3 |         2 |
+| Clotrimazole           | Colecalciferol |         3 |         2 |
++------------------------+----------------+-----------+-----------+
+3 rows in set (0.06 sec)
+
+mysql> tee /Users/hariskaterelos/Documents/hospital-db-management/sql/Q9_out.txt;

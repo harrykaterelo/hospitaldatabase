@@ -1,0 +1,55 @@
+mysql> source /Users/hariskaterelos/Documents/hospital-db-management/queries/3.sql
+ERROR 1146 (42S02): Table 'hospitaldb.trexon_kostos_nosileia' doesn't exist
+mysql> source /Users/hariskaterelos/Documents/hospital-db-management/bussiness_rules/nosileia/views/trexon_kostos_view.sql
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> source /Users/hariskaterelos/Documents/hospital-db-management/queries/3.sql
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from query_3;
++--------------+----------+-------+--------------+
+| amka_astheni | tmima_id | fores | total_kostos |
++--------------+----------+-------+--------------+
+| 01021210197  |        5 |     4 |         NULL |
+| 03116810059  |        3 |     4 |         NULL |
+| 03116810059  |        9 |     6 |         NULL |
+| 04127510088  |       12 |     4 |         NULL |
+| 05013410061  |       11 |     4 |         NULL |
+| 08066910176  |       16 |     4 |         NULL |
+| 10067310094  |       15 |     4 |         NULL |
+| 10069710122  |       18 |     4 |         NULL |
+| 10105910206  |        5 |     6 |         NULL |
+| 11030810039  |        3 |     7 |         NULL |
+| 11078010123  |        4 |     5 |         NULL |
+| 11078010123  |       15 |     5 |         NULL |
+| 12086310124  |       11 |     4 |         NULL |
+| 12086310124  |       14 |     4 |         NULL |
+| 12122510208  |       10 |     5 |         NULL |
+| 13108410181  |        8 |     5 |         NULL |
+| 15074010043  |       14 |     5 |         NULL |
+| 15103610155  |       15 |     5 |         NULL |
+| 17125410101  |        8 |     4 |         NULL |
+| 17127810129  |        2 |     5 |         NULL |
+| 18028510158  |       16 |     5 |         NULL |
+| 20056510188  |        4 |     4 |         NULL |
+| 22049310134  |        9 |     4 |         NULL |
+| 23055210107  |        8 |     4 |         NULL |
+| 23057610135  |       10 |     5 |         NULL |
+| 23070010163  |        1 |     4 |         NULL |
+| 23070010163  |        9 |     5 |         NULL |
+| 23111610023  |       11 |     4 |         NULL |
+| 23111610023  |       16 |     4 |         NULL |
+| 24063510108  |        1 |     4 |         NULL |
+| 24063510108  |        4 |     4 |         NULL |
+| 24078310164  |       17 |     4 |         NULL |
+| 25019210025  |       10 |     4 |         NULL |
+| 26106310194  |       18 |     4 |         NULL |
+| 27103210167  |       15 |     4 |         NULL |
+| 28081910056  |       13 |     4 |         NULL |
+| 28111510168  |       16 |     4 |         NULL |
+| 28111510168  |       18 |     4 |         NULL |
+| 28122910196  |        6 |     5 |         NULL |
++--------------+----------+-------+--------------+
+39 rows in set (0.01 sec)
+
+mysql> tee /Users/hariskaterelos/Documents/hospital-db-management/sql/Q2_out.txt;

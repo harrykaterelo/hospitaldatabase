@@ -27,7 +27,7 @@ BEGIN
 END //
 DELIMITER ;
 
-ANALYZE
+EXPLAIN
 SELECT
     n.nosileia_id,
     n.imerominia_eisodou,
@@ -51,7 +51,7 @@ GROUP BY n.nosileia_id,
 ORDER BY n.imerominia_eisodou DESC;
 
 
-ANALYZE
+EXPLAIN
 SELECT
     n.nosileia_id,
     n.imerominia_eisodou,
@@ -73,5 +73,7 @@ GROUP BY n.nosileia_id,
          n.imerominia_eksodou,
          n.synoliko_kostos
 ORDER BY n.imerominia_eisodou DESC;
+
+
 
 
