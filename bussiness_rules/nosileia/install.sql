@@ -77,7 +77,7 @@ CREATE TABLE iatrikipraxi (
     nosileia_id             INT             NOT NULL,
     amka_kyriou_xeirourgou  CHAR(11)        NOT NULL,
     kod_xwrou               VARCHAR(20)     NOT NULL,
-    onoma                   VARCHAR(200)    NOT NULL,
+    iatriki_praxi_kodikos VARCHAR(32) COLLATE utf8mb4_unicode_ci NOT NULL
     katigoria               VARCHAR(30)     NOT NULL
         CHECK (katigoria IN ('Χειρουργική','Διαγνωστική','Θεραπευτική')),
     diarkeia_lepta          SMALLINT        NOT NULL CHECK (diarkeia_lepta > 0),

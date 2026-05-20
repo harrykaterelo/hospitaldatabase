@@ -118,7 +118,9 @@
                 ORDER BY RAND()
                 LIMIT 1;
 
-                SELECT ip.kodikos into v_kod_iatriki from iatrikespraxeis ip
+                SELECT ip.kodikos into 
+                v_kod_iatriki from iatrikespraxeis ip
+                where ip.onoma!='ΑΝΕΝΕΡΓΟΣ'
                 order by rand() limit 1;
 
                 IF v_kod_xwrou IS NULL THEN
