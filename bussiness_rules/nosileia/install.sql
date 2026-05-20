@@ -20,7 +20,7 @@ CREATE TABLE nosileia (
 
 CREATE TABLE diagnosi (
     nosileia_id     INT             NOT NULL,
-    icd             VARCHAR(10)     NULL,
+    icd             VARCHAR(10)    NULL,
     tipos_diagnosis VARCHAR(20)     NOT NULL
         CHECK (tipos_diagnosis IN ('Εισοδος', 'Εξοδος')),
     PRIMARY KEY (nosileia_id, tipos_diagnosis),
@@ -65,13 +65,19 @@ CREATE TABLE xwros_epembasis (
         CHECK (typos IN ('Χειρουργείο','Αίθουσα επέμβασης')),
     PRIMARY KEY (kodikos)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
+CREATE TABLE iatrikespraxeis (
+  kodikos VARCHAR(32) NOT NULL,
+  onoma TEXT NOT NULL,
+  PRIMARY KEY (kodikos)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
 CREATE TABLE iatrikipraxi (
     kodikos                 VARCHAR(20)     NOT NULL,
     nosileia_id             INT             NOT NULL,
     amka_kyriou_xeirourgou  CHAR(11)        NOT NULL,
     kod_xwrou               VARCHAR(20)     NOT NULL,
-    onoma                   VARCHAR(200)    NOT NULL,
+    iatriki_praxi_kodikos VARCHAR(32) COLLATE utf8mb4_unicode_ci NOT NULL
     katigoria               VARCHAR(30)     NOT NULL
         CHECK (katigoria IN ('Χειρουργική','Διαγνωστική','Θεραπευτική')),
     diarkeia_lepta          SMALLINT        NOT NULL CHECK (diarkeia_lepta > 0),
