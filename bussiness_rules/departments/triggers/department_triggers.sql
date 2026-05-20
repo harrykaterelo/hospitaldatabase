@@ -90,43 +90,7 @@ END //
 DELIMITER ;
 
 
--- DROP TRIGGER IF EXISTS proswpiko_allagi_tmimatos_insert_trigger //
 
--- CREATE TRIGGER proswpiko_allagi_tmimatos_insert_trigger
--- AFTER INSERT ON proswpiko_allagi_tmimatos
--- FOR EACH ROW
--- BEGIN
-
--- DECLARE proswpiko_exists INT DEFAULT 0;
--- DECLARE tmima_exists INT DEFAULT 0;
-
--- SELECT COUNT(*)
--- INTO proswpiko_exists
--- FROM proswpiko
--- WHERE amka = NEW.amka_proswpikou;
-
--- IF proswpiko_exists = 0 THEN
---     SIGNAL SQLSTATE '45000'
---     SET MESSAGE_TEXT = 'To προσωπικό με αυτό το AMKA δεν υπάρχει';
--- END IF;
-
--- SELECT COUNT(*)
--- INTO tmima_exists
--- FROM tmima
--- WHERE tmima_id = NEW.tmima_id;
-
--- IF tmima_exists = 0 THEN
---     SIGNAL SQLSTATE '45000'
---     SET MESSAGE_TEXT = 'Το τμήμα με αυτό το ID δεν υπάρχει';
--- END IF;
-
--- UPDATE proswpiko_anikei_se_tmima
--- SET tmima_id = NEW.tmima_id
--- WHERE amka_proswpikou = NEW.amka_proswpikou;
-
--- END //
-
-DELIMITER //
 
 DROP TRIGGER IF EXISTS tmima_insert_trigger //
 
@@ -153,6 +117,7 @@ IF NEW.amka_dieftinti IS NOT NULL THEN
     SELECT vathmida
     INTO vathmida_dieftinti
     FROM iatros
+    join vathmida_iatrou v on v.vathmida_id = 
     WHERE amka = NEW.amka_dieftinti;
 
     IF vathmida_dieftinti != 4 THEN

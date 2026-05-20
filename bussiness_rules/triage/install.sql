@@ -24,7 +24,18 @@ CREATE TABLE efimeria_se_kathikon_triage (
         )
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE table parapobi_gia_nosileia(
+    id_dialogis     INT             NOT NULL,
+    nosileia_id  INT NOT NULL,
+    PRIMARY KEY (id_dialogis,nosileia_id),
+    FOREIGN KEY (nosileia_id) references nosileia(nosileia_id)
+     ON DELETE RESTRICT
+    ON UPDATE CASCADE
+    ,
+    FOREIGN KEY (id_dialogis) references dialogistoixeiwn(id_dialogis) 
+    ON delete CASCADE on update cascade
 
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE TABLE dialogistoixeiwn (
     id_dialogis     INT             NOT NULL AUTO_INCREMENT,
     amka_astheni    CHAR(11)        NOT NULL,
