@@ -90,7 +90,7 @@ END //
 DELIMITER ;
 
 
-
+DELIMITER //
 
 DROP TRIGGER IF EXISTS tmima_insert_trigger //
 
