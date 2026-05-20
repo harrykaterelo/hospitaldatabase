@@ -1,1 +1,0 @@
-select t.amka_dieftinti,(CASE when v.vathmida_onoma='Διευθυντής' then true else false end ) as 'ειναι διευθυντης' from tmima t join iatros i on i.amka=t.amka_dieftinti join vathmida_iatrou v on v.vathmida_id=i.vathmida;
