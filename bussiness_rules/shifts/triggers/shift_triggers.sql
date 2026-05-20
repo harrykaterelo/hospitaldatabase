@@ -111,9 +111,7 @@ LIMIT 1;
     /*
       3. Check consecutive same-type shifts.
 
-      This checks the most recent previous shifts, in descending order.
-      If the latest N previous shifts are the same type as the new one,
-      then adding this new one exceeds the allowed limit.
+      
     */
     IF v_allowed_consecutive IS NOT NULL THEN
 
