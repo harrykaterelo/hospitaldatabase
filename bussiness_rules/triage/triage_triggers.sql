@@ -38,11 +38,6 @@ BEGIN
               OR TIME(NEW.wra_afiksis) < v.vardia_ora_lixis))
     LIMIT 1;
 
-    IF v_not_found THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Δεν βρέθηκε βάρδια που να καλύπτει την ώρα άφιξης.';
-    END IF;
-
     -- 2. Βρες τον ορισμένο νοσηλευτή διαλογής γι' αυτή τη βάρδια
     SET v_not_found = FALSE;
 

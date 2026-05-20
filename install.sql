@@ -429,13 +429,597 @@ CREATE TABLE syntagografisi (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
+-- 9. ERROR LOG / AUDIT
+-- ============================================================
+
+CREATE TABLE error_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    error_message TEXT NOT NULL,
+    error_time DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ============================================================
+-- VIEWS
+-- ============================================================
+
+CREATE VIEW diathesimes_klines AS
+SELECT tmima_id, ar_kliis
+FROM klini
+WHERE katastasi = 'Διαθέσιμη';
+
+-- Ουρά αναμονής ΤΕΠ: εκκρεμείς ασθενείς ταξινομημένοι κατά
+-- επίπεδο επείγοντος (1=πιο επείγον) και FIFO ανά επίπεδο.
+CREATE OR REPLACE VIEW oura_anamenomenwn AS
+SELECT
+    d.id_dialogis,
+    d.epipedo,
+    CASE d.epipedo
+        WHEN 1 THEN 'Άμεσο'
+        WHEN 2 THEN 'Επείγον'
+        WHEN 3 THEN 'Επιτακτικό'
+        WHEN 4 THEN 'Λιγότερο επείγον'
+        WHEN 5 THEN 'Μη επείγον'
+    END                                         AS perigrafi_epipedou,
+    d.wra_afiksis,
+    TIMESTAMPDIFF(MINUTE, d.wra_afiksis, NOW()) AS lepta_anamon_is,
+    d.amka_astheni,
+    d.symptomata
+FROM dialogistoixeiwn d
+WHERE d.apotelesma IS NULL
+ORDER BY d.epipedo ASC, d.wra_afiksis ASC;
+
+-- ============================================================
+-- STORED PROCEDURES / FUNCTIONS
+-- ============================================================
+
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS add_error //
+
+CREATE PROCEDURE add_error(
+    IN p_error_message TEXT
+)
+BEGIN
+    INSERT INTO error_log (
+        error_message,
+        error_time
+    )
+    VALUES (
+        p_error_message,
+        NOW()
+    );
+END //
+
+DROP FUNCTION IF EXISTS efimeria_check //
+
+CREATE FUNCTION efimeria_check(
+    p_tmima INT,
+    p_imerominia DATE,
+    p_vardia INT
+)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+    DECLARE v_doctors INT DEFAULT 0;
+    DECLARE v_nurses INT DEFAULT 0;
+    DECLARE v_admins INT DEFAULT 0;
+
+    DECLARE doctor_min_count INT DEFAULT 3;
+    DECLARE nurse_min_count INT DEFAULT 6;
+    DECLARE admin_min_count INT DEFAULT 2;
+
+    DECLARE docs_that_require_senior_in_shift INT DEFAULT 0;
+    DECLARE docs_that_can_cover_shift INT DEFAULT 0;
+
+    SELECT
+        iatros_min_count,
+        nosileutes_min_count,
+        dioikitiko_min_count
+    INTO
+        doctor_min_count,
+        nurse_min_count,
+        admin_min_count
+    FROM efimeria_requirements
+    LIMIT 1;
+
+    SELECT
+        COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'Ιατρός' THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'Νοσηλευτής' THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN p.typos_proswpikou = 'Διοικητικό' THEN 1 ELSE 0 END), 0)
+    INTO
+        v_doctors,
+        v_nurses,
+        v_admins
+    FROM efimeria_proswpiko ep
+    JOIN proswpiko p
+        ON ep.amka_proswpiko = p.amka
+    WHERE ep.tmima = p_tmima
+      AND ep.imerominia = p_imerominia
+      AND ep.vardia = p_vardia;
+
+    IF v_doctors < doctor_min_count
+       OR v_nurses < nurse_min_count
+       OR v_admins < admin_min_count THEN
+        RETURN 0;
+    END IF;
+
+    SELECT
+        COALESCE(SUM(CASE WHEN v.requires_senior_in_shift = 1 THEN 1 ELSE 0 END), 0),
+        COALESCE(SUM(CASE WHEN v.can_cover_specialist_shift = 1 THEN 1 ELSE 0 END), 0)
+    INTO
+        docs_that_require_senior_in_shift,
+        docs_that_can_cover_shift
+    FROM efimeria_proswpiko ep
+    JOIN iatros i
+        ON ep.amka_proswpiko = i.amka
+    JOIN vathmida_iatrou v
+        ON i.vathmida = v.vathmida_id
+    WHERE ep.tmima = p_tmima
+      AND ep.imerominia = p_imerominia
+      AND ep.vardia = p_vardia;
+
+    IF docs_that_require_senior_in_shift > 0
+       AND docs_that_can_cover_shift = 0 THEN
+        RETURN 0;
+    END IF;
+
+    RETURN 1;
+END //
+
+-- ------------------------------------------------------------
+-- TRIAGE PROCEDURES
+-- ------------------------------------------------------------
+
+DROP PROCEDURE IF EXISTS register_triage //
+
+CREATE PROCEDURE register_triage(
+    IN  p_amka_astheni   CHAR(11),
+    IN  p_amka_nosilevti CHAR(11),
+    IN  p_wra_afiksis    DATETIME,
+    IN  p_symptomata     TEXT,
+    IN  p_epipedo        TINYINT,
+    OUT p_id_dialogis    INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    INSERT INTO dialogistoixeiwn
+        (amka_astheni, amka_nosilevti, wra_afiksis, symptomata, epipedo)
+    VALUES
+        (p_amka_astheni, p_amka_nosilevti, p_wra_afiksis, p_symptomata, p_epipedo);
+
+    SET p_id_dialogis = LAST_INSERT_ID();
+
+    COMMIT;
+END //
+
+DROP PROCEDURE IF EXISTS complete_triage //
+
+CREATE PROCEDURE complete_triage(
+    IN p_id_dialogis     INT,
+    IN p_apotelesma      VARCHAR(20),
+    IN p_odigies         TEXT,
+    IN p_wra_oloklirosis DATETIME
+)
+BEGIN
+    DECLARE v_current_apotelesma VARCHAR(20);
+    DECLARE v_not_found BOOLEAN DEFAULT FALSE;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_not_found = TRUE;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    SELECT apotelesma INTO v_current_apotelesma
+    FROM dialogistoixeiwn
+    WHERE id_dialogis = p_id_dialogis
+    FOR UPDATE;
+
+    IF v_not_found THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Δεν βρέθηκε εγγραφή διαλογής με αυτό το id.';
+    END IF;
+
+    IF v_current_apotelesma IS NOT NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Η διαλογή έχει ήδη ολοκληρωθεί.';
+    END IF;
+
+    UPDATE dialogistoixeiwn
+    SET
+        apotelesma      = p_apotelesma,
+        odigies         = p_odigies,
+        wra_oloklirosis = p_wra_oloklirosis
+    WHERE id_dialogis = p_id_dialogis;
+
+    COMMIT;
+END //
+
+-- ------------------------------------------------------------
+-- STAFF PROCEDURES
+-- ------------------------------------------------------------
+
+DROP PROCEDURE IF EXISTS add_doctor //
+
+CREATE PROCEDURE add_doctor(
+    IN p_amka CHAR(11),
+    IN p_onoma VARCHAR(50),
+    IN p_eponymo VARCHAR(50),
+    IN p_ilikia SMALLINT,
+    IN p_email VARCHAR(100),
+    IN p_tilefono VARCHAR(15),
+    IN p_imerominia_proslipsis DATE,
+    IN p_typos_proswpikou VARCHAR(20),
+    IN p_ar_ad_is VARCHAR(20),
+    IN p_eidikotita VARCHAR(80),
+    IN p_vathmida_id INT,
+    IN p_amka_epoptis CHAR(11)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    INSERT INTO anthropos (amka, onoma, eponymo, ilikia, email, tilefono)
+    VALUES (p_amka, p_onoma, p_eponymo, p_ilikia, p_email, p_tilefono);
+
+    INSERT INTO proswpiko (amka, imerominia_proslipsis, typos_proswpikou)
+    VALUES (p_amka, p_imerominia_proslipsis, p_typos_proswpikou);
+
+    INSERT INTO iatros (amka, ar_ad_is, eidikotita, vathmida, amka_epoptis)
+    VALUES (p_amka, p_ar_ad_is, p_eidikotita, p_vathmida_id, p_amka_epoptis);
+
+    COMMIT;
+END //
+
+DROP PROCEDURE IF EXISTS add_nosileutis //
+
+CREATE PROCEDURE add_nosileutis(
+    IN p_amka                   CHAR(11),
+    IN p_onoma                  VARCHAR(50),
+    IN p_eponymo                VARCHAR(50),
+    IN p_ilikia                 SMALLINT,
+    IN p_email                  VARCHAR(100),
+    IN p_tilefono               VARCHAR(15),
+    IN p_imerominia_proslipsis  DATE,
+    IN p_vathmida_nosileuti     VARCHAR(20),
+    IN p_tmima_id               INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    INSERT INTO anthropos (amka, onoma, eponymo, ilikia, email, tilefono)
+    VALUES (p_amka, p_onoma, p_eponymo, p_ilikia, p_email, p_tilefono);
+
+    INSERT INTO proswpiko (amka, imerominia_proslipsis, typos_proswpikou)
+    VALUES (p_amka, p_imerominia_proslipsis, 'Νοσηλευτής');
+
+    INSERT INTO nosileutis (amka, vathmida_nosileuti)
+    VALUES (p_amka, p_vathmida_nosileuti);
+
+    INSERT INTO proswpiko_anikei_se_tmima (amka_proswpikou, tmima_id)
+    VALUES (p_amka, p_tmima_id);
+
+    COMMIT;
+END //
+
+DROP PROCEDURE IF EXISTS add_dioikitiko //
+
+CREATE PROCEDURE add_dioikitiko(
+    IN p_amka                   CHAR(11),
+    IN p_onoma                  VARCHAR(50),
+    IN p_eponymo                VARCHAR(50),
+    IN p_ilikia                 SMALLINT,
+    IN p_email                  VARCHAR(100),
+    IN p_tilefono               VARCHAR(15),
+    IN p_imerominia_proslipsis  DATE,
+    IN p_rolos                  VARCHAR(80),
+    IN p_grafeio                VARCHAR(50),
+    IN p_tmima_id               INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    INSERT INTO anthropos (amka, onoma, eponymo, ilikia, email, tilefono)
+    VALUES (p_amka, p_onoma, p_eponymo, p_ilikia, p_email, p_tilefono);
+
+    INSERT INTO proswpiko (amka, imerominia_proslipsis, typos_proswpikou)
+    VALUES (p_amka, p_imerominia_proslipsis, 'Διοικητικό');
+
+    INSERT INTO dioikitiko (amka, rolos, grafeio)
+    VALUES (p_amka, p_rolos, p_grafeio);
+
+    INSERT INTO proswpiko_anikei_se_tmima (amka_proswpikou, tmima_id)
+    VALUES (p_amka, p_tmima_id);
+
+    COMMIT;
+END //
+
+-- ------------------------------------------------------------
+-- ASTHENIS PROCEDURE
+-- ------------------------------------------------------------
+
+DROP PROCEDURE IF EXISTS add_asthenis //
+
+CREATE PROCEDURE add_asthenis(
+    IN p_amka                CHAR(11),
+    IN p_onoma               VARCHAR(50),
+    IN p_eponymo             VARCHAR(50),
+    IN p_ilikia              SMALLINT,
+    IN p_email               VARCHAR(100),
+    IN p_tilefono            VARCHAR(15),
+    IN p_patronymo           VARCHAR(50),
+    IN p_fylo                VARCHAR(10),
+    IN p_varos               DECIMAL(5,2),
+    IN p_ypsos               DECIMAL(5,2),
+    IN p_diefthinsi          VARCHAR(200),
+    IN p_epangelma           VARCHAR(100),
+    IN p_ypikoiotita         VARCHAR(50),
+    IN p_asfalistikos_foreas VARCHAR(100)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    INSERT IGNORE INTO anthropos (amka, onoma, eponymo, ilikia, email, tilefono)
+    VALUES (p_amka, p_onoma, p_eponymo, p_ilikia, p_email, p_tilefono);
+
+    INSERT INTO asthenis (amka, patronymo, fylo, varos, ypsos, diefthinsi, epangelma, ypikoiotita, asfalistikos_foreas)
+    VALUES (p_amka, p_patronymo, p_fylo, p_varos, p_ypsos, p_diefthinsi, p_epangelma, p_ypikoiotita, p_asfalistikos_foreas);
+
+    COMMIT;
+END //
+
+-- ------------------------------------------------------------
+-- DEPARTMENT / KLINI PROCEDURES
+-- ------------------------------------------------------------
+
+DROP PROCEDURE IF EXISTS add_klini //
+
+CREATE PROCEDURE add_klini(
+    IN p_tmima_id   INT,
+    IN p_ar_kliis   SMALLINT,
+    IN p_typos      VARCHAR(30),
+    IN p_katastasi  VARCHAR(30)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+    INSERT IGNORE INTO klini (tmima_id, ar_kliis, typos, katastasi)
+    VALUES (p_tmima_id, p_ar_kliis, p_typos, p_katastasi);
+    COMMIT;
+END //
+
+-- ------------------------------------------------------------
+-- NOSILEIA PROCEDURES
+-- ------------------------------------------------------------
+
+DROP PROCEDURE IF EXISTS add_diagnosi //
+
+CREATE PROCEDURE add_diagnosi(
+    IN p_nosileia_id     INT,
+    IN p_icd             VARCHAR(10),
+    IN p_tipos_diagnosis VARCHAR(20)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+    INSERT INTO diagnosi (nosileia_id, icd, tipos_diagnosis)
+    VALUES (p_nosileia_id, p_icd, p_tipos_diagnosis);
+    COMMIT;
+END //
+
+DROP PROCEDURE IF EXISTS add_nosileia //
+
+CREATE PROCEDURE add_nosileia(
+    IN p_amka_astheni        CHAR(11),
+    IN p_tmima_id            INT,
+    IN p_ar_kliis            SMALLINT,
+    IN p_kod_ken             VARCHAR(20),
+    IN p_imerominia_eisodou  DATE,
+    IN p_icd_eisodou         VARCHAR(10),
+    IN p_imerominia_eksodou  DATE,
+    IN p_icd_eksodou         VARCHAR(10)
+)
+BEGIN
+    DECLARE v_nosileia_id INT;
+    DECLARE v_ar_kliis SMALLINT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    IF p_imerominia_eksodou IS NOT NULL THEN
+
+        IF p_ar_kliis IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'ar_kliis is required when imerominia_eksodou is not NULL';
+        END IF;
+
+        SET v_ar_kliis = p_ar_kliis;
+
+    ELSE
+
+        SELECT dk.ar_kliis
+        INTO v_ar_kliis
+        FROM diathesimes_klines dk
+        WHERE dk.tmima_id = p_tmima_id
+        ORDER BY RAND()
+        LIMIT 1;
+
+        IF v_ar_kliis IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'No available bed found for this tmima';
+        END IF;
+
+    END IF;
+
+    INSERT INTO nosileia (
+        amka_astheni,
+        tmima_id,
+        ar_kliis,
+        kod_ken,
+        imerominia_eisodou,
+        imerominia_eksodou
+    )
+    VALUES (
+        p_amka_astheni,
+        p_tmima_id,
+        v_ar_kliis,
+        p_kod_ken,
+        p_imerominia_eisodou,
+        p_imerominia_eksodou
+    );
+
+    SET v_nosileia_id = LAST_INSERT_ID();
+
+    INSERT INTO diagnosi (nosileia_id, icd, tipos_diagnosis)
+    VALUES (v_nosileia_id, p_icd_eisodou, 'Εισοδος');
+
+    IF p_imerominia_eksodou IS NOT NULL THEN
+        INSERT INTO diagnosi (nosileia_id, icd, tipos_diagnosis)
+        VALUES (v_nosileia_id, p_icd_eksodou, 'Εξοδος');
+    END IF;
+
+    COMMIT;
+
+    SELECT v_nosileia_id AS nosileia_id, v_ar_kliis AS ar_kliis;
+END //
+
+-- ------------------------------------------------------------
+-- SHIFTS PROCEDURE
+-- ------------------------------------------------------------
+
+DROP PROCEDURE IF EXISTS add_shift //
+
+CREATE PROCEDURE add_shift(
+    IN p_tmima VARCHAR(100),
+    IN p_imerominia DATE,
+    IN p_vardia VARCHAR(15),
+    IN p_amka_proswpiko CHAR(11)
+)
+BEGIN
+    DECLARE v_vardia_id INT DEFAULT NULL;
+    DECLARE v_efimeria_exists INT DEFAULT 0;
+    DECLARE v_tmima_id INT DEFAULT NULL;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    SELECT vardia_id
+    INTO v_vardia_id
+    FROM vardia
+    WHERE vardia_onoma = p_vardia
+    LIMIT 1;
+
+    SELECT tmima_id
+    INTO v_tmima_id
+    FROM tmima
+    WHERE onoma = p_tmima
+    LIMIT 1;
+
+    IF v_vardia_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Η βάρδια δεν υπάρχει';
+    END IF;
+
+    IF v_tmima_id IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Το τμήμα δεν υπάρχει';
+    END IF;
+
+    START TRANSACTION;
+
+    SELECT COUNT(*)
+    INTO v_efimeria_exists
+    FROM efimeria
+    WHERE tmima = v_tmima_id
+      AND imerominia = p_imerominia
+      AND vardia = v_vardia_id;
+
+    IF v_efimeria_exists = 0 THEN
+        INSERT INTO efimeria (tmima, imerominia, vardia)
+        VALUES (v_tmima_id, p_imerominia, v_vardia_id);
+    END IF;
+
+    INSERT INTO efimeria_proswpiko (
+        tmima,
+        imerominia,
+        vardia,
+        amka_proswpiko
+    )
+    VALUES (
+        v_tmima_id,
+        p_imerominia,
+        v_vardia_id,
+        p_amka_proswpiko
+    );
+
+    IF efimeria_check(v_tmima_id, p_imerominia, v_vardia_id) = 1 THEN
+        UPDATE efimeria
+        SET statusEf = 'FINISHED'
+        WHERE tmima = v_tmima_id
+          AND imerominia = p_imerominia
+          AND vardia = v_vardia_id;
+    END IF;
+
+    COMMIT;
+END //
+
+DELIMITER ;
+
+-- ============================================================
 -- ============================================================
 -- TRIGGERS
--- ============================================================
--- Σημείωση: ορισμένοι triggers αναφέρονται σε views/procedures
--- (π.χ. diathesimes_klines, add_error) που πρέπει να υπάρχουν
--- πριν εκτελεστεί ο αντίστοιχος trigger σε runtime. Η MySQL δεν
--- κάνει validation αυτών των αναφορών κατά το CREATE TRIGGER.
 -- ============================================================
 
 DELIMITER //
@@ -1124,6 +1708,78 @@ BEGIN
             SET MESSAGE_TEXT = msg;
         END IF;
 
+    END IF;
+END //
+
+DROP TRIGGER IF EXISTS shift_trigger_after_insert //
+
+CREATE TRIGGER shift_trigger_after_insert
+AFTER INSERT ON efimeria_proswpiko
+FOR EACH ROW
+BEGIN
+    IF efimeria_check(NEW.tmima, NEW.imerominia, NEW.vardia) = 1 THEN
+        UPDATE efimeria
+        SET statusEf = 'FINISHED'
+        WHERE tmima = NEW.tmima
+          AND imerominia = NEW.imerominia
+          AND vardia = NEW.vardia;
+    END IF;
+END //
+
+-- ============================================================
+-- TRIAGE TRIGGERS
+-- ============================================================
+
+DROP TRIGGER IF EXISTS triage_trigger_insert //
+
+CREATE TRIGGER triage_trigger_insert
+BEFORE INSERT ON dialogistoixeiwn
+FOR EACH ROW
+BEGIN
+    DECLARE v_imerominia DATE;
+    DECLARE v_vardia INT;
+    DECLARE v_triage_amka CHAR(11);
+    DECLARE v_not_found BOOLEAN DEFAULT FALSE;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_not_found = TRUE;
+
+    SELECT
+        CASE
+            WHEN v.vardia_ora_lixis > v.vardia_ora_ekkinisis
+                THEN DATE(NEW.wra_afiksis)
+            WHEN TIME(NEW.wra_afiksis) >= v.vardia_ora_ekkinisis
+                THEN DATE(NEW.wra_afiksis)
+            ELSE DATE_SUB(DATE(NEW.wra_afiksis), INTERVAL 1 DAY)
+        END,
+        v.vardia_id
+    INTO v_imerominia, v_vardia
+    FROM vardia v
+    WHERE
+        (v.vardia_ora_lixis > v.vardia_ora_ekkinisis
+         AND TIME(NEW.wra_afiksis) >= v.vardia_ora_ekkinisis
+         AND TIME(NEW.wra_afiksis) <  v.vardia_ora_lixis)
+        OR
+        (v.vardia_ora_lixis <= v.vardia_ora_ekkinisis
+         AND (TIME(NEW.wra_afiksis) >= v.vardia_ora_ekkinisis
+              OR TIME(NEW.wra_afiksis) < v.vardia_ora_lixis))
+    LIMIT 1;
+
+    SET v_not_found = FALSE;
+
+    SELECT amka_proswpiko
+    INTO v_triage_amka
+    FROM efimeria_se_kathikon_triage
+    WHERE imerominia = v_imerominia
+      AND vardia     = v_vardia;
+
+    IF v_not_found THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Δεν έχει οριστεί νοσηλευτής διαλογής για αυτή τη βάρδια.';
+    END IF;
+
+    IF v_triage_amka <> NEW.amka_nosilevti THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Ο νοσηλευτής δεν είναι ο νοσηλευτής διαλογής για αυτή τη βάρδια.';
     END IF;
 END //
 
