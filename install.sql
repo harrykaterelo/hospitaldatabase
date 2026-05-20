@@ -1105,13 +1105,7 @@ BEGIN
         p_amka_proswpiko
     );
 
-    IF efimeria_check(v_tmima_id, p_imerominia, v_vardia_id) = 1 THEN
-        UPDATE efimeria
-        SET statusEf = 'FINISHED'
-        WHERE tmima = v_tmima_id
-          AND imerominia = p_imerominia
-          AND vardia = v_vardia_id;
-    END IF;
+    
 
     COMMIT;
 END //
