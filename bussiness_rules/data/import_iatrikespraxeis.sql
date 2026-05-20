@@ -1,4 +1,4 @@
-LOAD DATA LOCAL INFILE '/Users/hariskaterelos/Documents/hospital-db-management/bussiness_rules/data/iatrikespraxeis.csv'
+LOAD DATA LOCAL INFILE 'C:/Users/giann/Documents/hospitaldatabase/bussiness_rules/data/iatrikespraxeis.csv'
 INTO TABLE iatrikespraxeis
 CHARACTER SET utf8mb4
 FIELDS TERMINATED BY ','

@@ -220,7 +220,8 @@ CREATE TABLE axiologisi (
 CREATE TABLE exetasi (
     nosileia_id         INT             NOT NULL,
     kodikos             VARCHAR(20)     NOT NULL,
-    typos               VARCHAR(80)     NOT NULL,
+    typos               VARCHAR(80)     NOT NULL
+        CHECK (typos IN ('αιματολογικές','βιοχημικές','απεικονιστικές')),
     imerominia          DATE            NOT NULL,
     apotelesma_keim     TEXT            NULL,
     apotelesma_ar_timi  DECIMAL(12,4)   NULL,
@@ -234,12 +235,20 @@ CREATE TABLE exetasi (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE iatrikespraxeis (
+    kodikos VARCHAR(32) NOT NULL,
+    onoma TEXT NOT NULL,
+    PRIMARY KEY (kodikos)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE iatrikipraxi (
     kodikos                 VARCHAR(20)     NOT NULL,
     nosileia_id             INT             NOT NULL,
     amka_kyriou_xeirourgou  CHAR(11)        NOT NULL,
     kod_xwrou               VARCHAR(20)     NOT NULL,
-    onoma                   VARCHAR(200)    NOT NULL,
+    iatriki_praxi_kodikos   VARCHAR(32)     COLLATE utf8mb4_unicode_ci NOT NULL,
     katigoria               VARCHAR(30)     NOT NULL
         CHECK (katigoria IN ('Χειρουργική','Διαγνωστική','Θεραπευτική')),
     diarkeia_lepta          SMALLINT        NOT NULL CHECK (diarkeia_lepta > 0),
@@ -251,6 +260,8 @@ CREATE TABLE iatrikipraxi (
     FOREIGN KEY (amka_kyriou_xeirourgou) REFERENCES iatros(amka)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (kod_xwrou) REFERENCES xwros_epembasis(kodikos)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (iatriki_praxi_kodikos) REFERENCES iatrikespraxeis(kodikos)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
