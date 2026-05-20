@@ -1906,3 +1906,24 @@ BEGIN
 END //
 
 DELIMITER ;
+
+-- ============================================================
+-- INDEXES
+-- ============================================================
+
+CREATE INDEX idx_nosileia_tmima_eisodos         ON nosileia(tmima_id, imerominia_eisodou);
+CREATE INDEX idx_eidikotita                     ON iatros(eidikotita);
+CREATE INDEX idx_efimeria_amka_imerominia       ON efimeria_proswpiko(amka_proswpiko, imerominia);
+CREATE INDEX idx_nosileia_asthenis_tmima        ON nosileia(amka_astheni, tmima_id);
+CREATE INDEX idx_ilikia                         ON anthropos(ilikia);
+CREATE INDEX idx_praxi_katigoria_xeirourgos     ON iatrikipraxi(katigoria, amka_kyriou_xeirourgou);
+CREATE INDEX idx_ef_proswpiko_amka_tmima_imer   ON efimeria_proswpiko(amka_proswpiko, tmima, imerominia);
+CREATE INDEX idx_proswpiko_typos                ON proswpiko(typos_proswpikou);
+CREATE INDEX idx_nosileia_amka_eisodos_eksodos  ON nosileia(amka_astheni, imerominia_eisodou, imerominia_eksodou);
+CREATE INDEX idx_syntagografisi_nosileia_astheni ON syntagografisi(nosileia_id, amka_astheni, kod_ema);
+CREATE INDEX idx_ef_proswpiko_imer_tmima_vardia ON efimeria_proswpiko(imerominia, tmima, vardia);
+CREATE INDEX idx_dioikitiko_rolos               ON dioikitiko(rolos);
+CREATE INDEX idx_nosileutis_vathmida            ON nosileutis(vathmida_nosileuti);
+CREATE INDEX idx_diagnosi_typos_icd             ON diagnosi(tipos_diagnosis, icd, nosileia_id);
+CREATE INDEX idx_dialogi_epipedo_oloklirosis    ON dialogistoixeiwn(epipedo, wra_oloklirosis);
+CREATE INDEX idx_dialogi_apotelesma_epipedo     ON dialogistoixeiwn(apotelesma, epipedo);
