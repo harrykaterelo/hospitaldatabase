@@ -1,7 +1,5 @@
 -- ============================================================
 -- HOSPITAL DATABASE - FULL INSTALL
--- Δημιουργεί όλους τους πίνακες σε σωστή σειρά εξαρτήσεων (FK).
--- Δεν χρειάζεται SET FOREIGN_KEY_CHECKS = 0.
 -- ============================================================
 
 SET NAMES utf8mb4;
@@ -26,6 +24,7 @@ CREATE TABLE vathmida_iatrou(
     is_supervised BOOL NULL,
     can_supervise BOOL NULL,
     can_cover_specialist_shift BOOL NOT NULL DEFAULT 0,
+    requires_senior_in_shift BOOL NOT NULL DEFAULT 0,
     can_run_department BOOL NOT NULL DEFAULT 0
 );
 
@@ -220,7 +219,8 @@ CREATE TABLE axiologisi (
 CREATE TABLE exetasi (
     nosileia_id         INT             NOT NULL,
     kodikos             VARCHAR(20)     NOT NULL,
-    typos               VARCHAR(80)     NOT NULL,
+    typos               VARCHAR(80)     NOT NULL
+        CHECK (typos IN ('αιματολογικές','βιοχημικές','απεικονιστικές')),
     imerominia          DATE            NOT NULL,
     apotelesma_keim     TEXT            NULL,
     apotelesma_ar_timi  DECIMAL(12,4)   NULL,
@@ -234,12 +234,20 @@ CREATE TABLE exetasi (
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE iatrikespraxeis (
+    kodikos VARCHAR(32) NOT NULL,
+    onoma TEXT NOT NULL,
+    PRIMARY KEY (kodikos)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE iatrikipraxi (
     kodikos                 VARCHAR(20)     NOT NULL,
     nosileia_id             INT             NOT NULL,
     amka_kyriou_xeirourgou  CHAR(11)        NOT NULL,
     kod_xwrou               VARCHAR(20)     NOT NULL,
-    onoma                   VARCHAR(200)    NOT NULL,
+    iatriki_praxi_kodikos   VARCHAR(32)     COLLATE utf8mb4_unicode_ci NOT NULL,
     katigoria               VARCHAR(30)     NOT NULL
         CHECK (katigoria IN ('Χειρουργική','Διαγνωστική','Θεραπευτική')),
     diarkeia_lepta          SMALLINT        NOT NULL CHECK (diarkeia_lepta > 0),
@@ -251,6 +259,8 @@ CREATE TABLE iatrikipraxi (
     FOREIGN KEY (amka_kyriou_xeirourgou) REFERENCES iatros(amka)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     FOREIGN KEY (kod_xwrou) REFERENCES xwros_epembasis(kodikos)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (iatriki_praxi_kodikos) REFERENCES iatrikespraxeis(kodikos)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -277,11 +287,10 @@ CREATE TABLE dialogistoixeiwn (
     epipedo         TINYINT         NOT NULL
         CHECK (epipedo BETWEEN 1 AND 5),
 
-    -- NULL ενώ ο ασθενής αναμένει εξυπηρέτηση
     apotelesma      VARCHAR(20)     NULL
         CHECK (apotelesma IN ('Αποχώρηση', 'Παραπομπή')),
-    odigies         TEXT            NULL,    -- συμπληρώνεται αν αποχωρεί
-    wra_oloklirosis DATETIME        NULL,    -- στιγμή ολοκλήρωσης
+    odigies         TEXT            NULL,
+    wra_oloklirosis DATETIME        NULL,
 
     PRIMARY KEY (id_dialogis),
 
@@ -297,7 +306,15 @@ CREATE TABLE dialogistoixeiwn (
         CHECK (wra_oloklirosis IS NULL OR wra_afiksis < wra_oloklirosis)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-
+CREATE TABLE parapobi_gia_nosileia (
+    id_dialogis     INT     NOT NULL,
+    nosileia_id     INT     NOT NULL,
+    PRIMARY KEY (id_dialogis, nosileia_id),
+    FOREIGN KEY (nosileia_id) REFERENCES nosileia(nosileia_id)
+        ON DELETE RESTRICT ON UPDATE CASCADE,
+    FOREIGN KEY (id_dialogis) REFERENCES dialogistoixeiwn(id_dialogis)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ============================================================
 -- 7. SHIFTS / ΕΦΗΜΕΡΙΕΣ
@@ -447,8 +464,6 @@ SELECT tmima_id, ar_kliis
 FROM klini
 WHERE katastasi = 'Διαθέσιμη';
 
--- Ουρά αναμονής ΤΕΠ: εκκρεμείς ασθενείς ταξινομημένοι κατά
--- επίπεδο επείγοντος (1=πιο επείγον) και FIFO ανά επίπεδο.
 CREATE OR REPLACE VIEW oura_anamenomenwn AS
 SELECT
     d.id_dialogis,
@@ -570,33 +585,60 @@ END //
 -- TRIAGE PROCEDURES
 -- ------------------------------------------------------------
 
-DROP PROCEDURE IF EXISTS register_triage //
+DROP PROCEDURE IF EXISTS register_dialogi //
 
-CREATE PROCEDURE register_triage(
-    IN  p_amka_astheni   CHAR(11),
-    IN  p_amka_nosilevti CHAR(11),
-    IN  p_wra_afiksis    DATETIME,
-    IN  p_symptomata     TEXT,
-    IN  p_epipedo        TINYINT,
-    OUT p_id_dialogis    INT
+CREATE PROCEDURE register_dialogi(
+    IN p_amka_astheni    CHAR(11),
+    IN p_wra_afiksis     DATETIME,
+    IN p_symptomata      TEXT,
+    IN p_epipedo         TINYINT,
+    IN p_apotelesma      VARCHAR(20),
+    IN p_odigies         TEXT,
+    IN p_wra_oloklirosis DATETIME
 )
 BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        RESIGNAL;
-    END;
+    DECLARE v_amka_nosilevti CHAR(11);
 
-    START TRANSACTION;
+    SELECT e.amka_proswpiko
+        INTO v_amka_nosilevti
+        FROM efimeria_se_kathikon_triage e
+        JOIN vardia v
+        ON v.vardia_id = e.vardia
+        WHERE p_wra_afiksis >= TIMESTAMP(DATE(e.imerominia), v.vardia_ora_ekkinisis)
+        AND p_wra_afiksis < CASE
+            WHEN v.vardia_ora_lixis > v.vardia_ora_ekkinisis THEN
+                TIMESTAMP(DATE(e.imerominia), v.vardia_ora_lixis)
+            ELSE
+                TIMESTAMP(DATE(e.imerominia) + INTERVAL 1 DAY, v.vardia_ora_lixis)
+        END
+        ORDER BY RAND()
+        LIMIT 1;
 
-    INSERT INTO dialogistoixeiwn
-        (amka_astheni, amka_nosilevti, wra_afiksis, symptomata, epipedo)
-    VALUES
-        (p_amka_astheni, p_amka_nosilevti, p_wra_afiksis, p_symptomata, p_epipedo);
+    IF v_amka_nosilevti IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'No nosileutis found for register_dialogi';
+    END IF;
 
-    SET p_id_dialogis = LAST_INSERT_ID();
-
-    COMMIT;
+    INSERT INTO dialogistoixeiwn (
+        amka_astheni,
+        amka_nosilevti,
+        wra_afiksis,
+        symptomata,
+        epipedo,
+        apotelesma,
+        odigies,
+        wra_oloklirosis
+    )
+    VALUES (
+        p_amka_astheni,
+        v_amka_nosilevti,
+        p_wra_afiksis,
+        p_symptomata,
+        p_epipedo,
+        p_apotelesma,
+        p_odigies,
+        p_wra_oloklirosis
+    );
 END //
 
 DROP PROCEDURE IF EXISTS complete_triage //
@@ -605,10 +647,17 @@ CREATE PROCEDURE complete_triage(
     IN p_id_dialogis     INT,
     IN p_apotelesma      VARCHAR(20),
     IN p_odigies         TEXT,
-    IN p_wra_oloklirosis DATETIME
+    IN p_wra_oloklirosis DATETIME,
+    IN p_tmima_id            INT,
+    IN p_kod_ken             VARCHAR(20),
+    IN p_imerominia_eisodou  DATE,
+    IN p_icd_eisodou         VARCHAR(10)
 )
 BEGIN
     DECLARE v_current_apotelesma VARCHAR(20);
+    DECLARE v_amka_astheni       CHAR(11);
+    DECLARE v_ar_kliis           SMALLINT;
+    DECLARE v_nosileia_id        INT;
     DECLARE v_not_found BOOLEAN DEFAULT FALSE;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_not_found = TRUE;
@@ -621,7 +670,8 @@ BEGIN
 
     START TRANSACTION;
 
-    SELECT apotelesma INTO v_current_apotelesma
+    SELECT apotelesma, amka_astheni
+    INTO v_current_apotelesma, v_amka_astheni
     FROM dialogistoixeiwn
     WHERE id_dialogis = p_id_dialogis
     FOR UPDATE;
@@ -642,6 +692,57 @@ BEGIN
         odigies         = p_odigies,
         wra_oloklirosis = p_wra_oloklirosis
     WHERE id_dialogis = p_id_dialogis;
+
+    IF p_apotelesma = 'Παραπομπή' THEN
+
+        IF p_tmima_id IS NULL
+           OR p_kod_ken IS NULL
+           OR p_imerominia_eisodou IS NULL
+           OR p_icd_eisodou IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Για παραπομπή απαιτούνται tmima_id, kod_ken, imerominia_eisodou, icd_eisodou.';
+        END IF;
+
+        SET v_not_found = FALSE;
+
+        SELECT dk.ar_kliis
+        INTO v_ar_kliis
+        FROM diathesimes_klines dk
+        WHERE dk.tmima_id = p_tmima_id
+        ORDER BY RAND()
+        LIMIT 1;
+
+        IF v_ar_kliis IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Δεν υπάρχει διαθέσιμη κλίνη στο τμήμα.';
+        END IF;
+
+        INSERT INTO nosileia (
+            amka_astheni,
+            tmima_id,
+            ar_kliis,
+            kod_ken,
+            imerominia_eisodou,
+            imerominia_eksodou
+        )
+        VALUES (
+            v_amka_astheni,
+            p_tmima_id,
+            v_ar_kliis,
+            p_kod_ken,
+            p_imerominia_eisodou,
+            NULL
+        );
+
+        SET v_nosileia_id = LAST_INSERT_ID();
+
+        INSERT INTO diagnosi (nosileia_id, icd, tipos_diagnosis)
+        VALUES (v_nosileia_id, p_icd_eisodou, 'Εισοδος');
+
+        INSERT INTO parapobi_gia_nosileia (id_dialogis, nosileia_id)
+        VALUES (p_id_dialogis, v_nosileia_id);
+
+    END IF;
 
     COMMIT;
 END //
@@ -1116,12 +1217,15 @@ END //
 -- DEPARTMENT TRIGGERS
 -- ============================================================
 
+DELIMITER //
+
 DROP TRIGGER IF EXISTS proswpiko_anikei_se_tmima_insert_trigger //
 
 CREATE TRIGGER proswpiko_anikei_se_tmima_insert_trigger
 BEFORE INSERT ON proswpiko_anikei_se_tmima
 FOR EACH ROW
 BEGIN
+
     DECLARE proswpiko_exists INT DEFAULT 0;
     DECLARE tmima_exists INT DEFAULT 0;
     DECLARE katigoria VARCHAR(20);
@@ -1150,7 +1254,7 @@ BEGIN
         SET MESSAGE_TEXT = 'Το τμήμα με αυτό το ID δεν υπάρχει';
     END IF;
 
-    SELECT typos_proswpikou
+    SELECT typos_proswpikou 
     INTO katigoria
     FROM proswpiko
     WHERE amka = NEW.amka_proswpikou;
@@ -1202,49 +1306,56 @@ BEGIN
 
 END //
 
+DELIMITER ;
+
+
+
+
 DROP TRIGGER IF EXISTS tmima_insert_trigger //
 
 CREATE TRIGGER tmima_insert_trigger
 BEFORE INSERT ON tmima
 FOR EACH ROW
 BEGIN
-    DECLARE dieftinti_exists INT DEFAULT 0;
-    DECLARE vathmida_dieftinti TINYINT;
-    DECLARE dieftinti_se_allo_tmima INT DEFAULT 0;
 
-    IF NEW.amka_dieftinti IS NOT NULL THEN
+DECLARE dieftinti_exists INT DEFAULT 0;
+DECLARE vathmida_dieftinti VARCHAR(20);
+DECLARE dieftinti_se_allo_tmima INT DEFAULT 0;
+IF NEW.amka_dieftinti IS NOT NULL THEN
 
-        SELECT COUNT(*)
-        INTO dieftinti_exists
-        FROM iatros
-        WHERE amka = NEW.amka_dieftinti;
+    SELECT COUNT(*)
+    INTO dieftinti_exists
+    FROM iatros
+    WHERE amka = NEW.amka_dieftinti;
 
-        IF dieftinti_exists = 0 THEN
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Ο διευθυντής με αυτό το ΑΜΚΑ δεν είναι δηλωμένος ιατρός';
-        END IF;
+    IF dieftinti_exists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Ο διευθυντής με αυτό το ΑΜΚΑ δεν είναι δηλωμένος ιατρός';
+    END IF;   
 
-        SELECT vathmida
-        INTO vathmida_dieftinti
-        FROM iatros
-        WHERE amka = NEW.amka_dieftinti;
+    SELECT v.vathmida_onoma
+    INTO vathmida_dieftinti
+    FROM iatros i
+    join vathmida_iatrou v on v.vathmida_id = i.vathmida
+    WHERE amka = NEW.amka_dieftinti;
 
-        IF vathmida_dieftinti != 4 THEN
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Ο ιατρός με αυτό το ΑΜΚΑ δεν έχει βαθμίδα διευθυντή';
-        END IF;
-
-        SELECT COUNT(*)
-        INTO dieftinti_se_allo_tmima
-        FROM tmima
-        WHERE amka_dieftinti = NEW.amka_dieftinti;
-
-        IF dieftinti_se_allo_tmima != 0 THEN
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Ο διευθυντής αυτός είναι ήδη διευθυντής σε άλλο τμήμα. Αν θες να τον ορίσεις διευθυντή αυτού του τμήματος κάνε INSERT το τμήμα χωρίς διευθυντή και μετά χρησιμοποίησε την update_tmima_proswpikou';
-        END IF;
+    IF vathmida_dieftinti != 'Διεθυντής' THEN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Ο ιατρός με αυτό το ΑΜΚΑ δεν έχει βαθμίδα διευθυντή';
     END IF;
+
+    SELECT COUNT(*)
+    INTO dieftinti_se_allo_tmima
+    FROM tmima
+    WHERE amka_dieftinti = NEW.amka_dieftinti;
+
+    IF dieftinti_se_allo_tmima != 0 THEN
+    SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Ο διευθυντής αυτός είναι ήδη διευθυντής σε άλλο τμήμα. Αν θες να τον ορίσεις διευθυντή αυτού του τμήματος κάνε INSERT το τμήμα χωρίς διευθυντή και μετά χρησιμοποίησε την update_tmima_proswpikou';
+    END IF;
+END IF;
 END //
+DELIMITER ;
 
 -- ============================================================
 -- NOSILEIA TRIGGERS

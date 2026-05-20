@@ -214,7 +214,7 @@ CHARACTER SET utf8mb4
 FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 LINES
-(kodikos, nosileia_id, amka_kyriou_xeirourgou, kod_xwrou, onoma, katigoria, diarkeia_lepta, kostos, imerominia_wra);
+(kodikos, nosileia_id, amka_kyriou_xeirourgou, kod_xwrou, iatriki_praxi_kodikos, katigoria, diarkeia_lepta, kostos, imerominia_wra);
 
 LOAD DATA INFILE 'C:/hospital_csv/praxi_voithos.csv'
 INTO TABLE praxi_voithos

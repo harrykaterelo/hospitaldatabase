@@ -14,10 +14,6 @@ CREATE PROCEDURE register_dialogi(
 BEGIN
     DECLARE v_amka_nosilevti CHAR(11);
 
-    /*
-      Pick a random nurse automatically.
-      This assumes nosileutis has column amka.
-    */
     SELECT e.amka_proswpiko
         INTO v_amka_nosilevti
         FROM efimeria_se_kathikon_triage e

@@ -21,6 +21,13 @@ CREATE TABLE vathmida_iatrou(
     can_cover_specialist_shift BOOL NOT NULL DEFAULT 0,
     can_run_department BOOL NOT NULL DEFAULT 0
 );
+
+-- ALTER για να προσθέσει την στήλη requires_senior_in_shift
+-- σε υπάρχουσα βάση που δημιουργήθηκε με την παλιότερη έκδοση του πίνακα.
+ALTER TABLE vathmida_iatrou
+    ADD COLUMN requires_senior_in_shift BOOL NOT NULL DEFAULT 0
+    AFTER can_cover_specialist_shift;
+
 CREATE TABLE proswpiko (
     amka                    CHAR(11)        NOT NULL,
     imerominia_proslipsis   DATE            NOT NULL,

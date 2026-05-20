@@ -15,8 +15,6 @@ CREATE TABLE efimeria_se_kathikon_triage (
 
     PRIMARY KEY (imerominia, vardia),
 
-    
-
     FOREIGN KEY (tmima, imerominia, vardia, amka_proswpiko)
         REFERENCES efimeria_proswpiko (
             tmima,
