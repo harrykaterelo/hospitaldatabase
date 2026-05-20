@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 DELIMITER //
 
 DROP TRIGGER IF EXISTS syntagografisi_insert_trigger //
