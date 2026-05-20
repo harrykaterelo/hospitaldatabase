@@ -13,7 +13,7 @@ CREATE TABLE efimeria_se_kathikon_triage (
     vardia INT NOT NULL,
     amka_proswpiko CHAR(11) NOT NULL,
 
-    PRIMARY KEY (tmima, imerominia, vardia, amka_proswpiko),
+    PRIMARY KEY (imerominia, vardia),
 
     
 
@@ -42,9 +42,6 @@ CREATE TABLE dialogistoixeiwn (
     odigies         TEXT            NULL,    -- συμπληρώνεται αν αποχωρεί
     wra_oloklirosis DATETIME        NULL,    -- στιγμή ολοκλήρωσης
 
-    -- συμπληρώνεται αν παραπέμπεται για νοσηλεία
-    nosileia_id     INT             NULL,
-
     PRIMARY KEY (id_dialogis),
 
     FOREIGN KEY (amka_astheni)
@@ -55,15 +52,6 @@ CREATE TABLE dialogistoixeiwn (
         REFERENCES nosileutis(amka)
         ON DELETE RESTRICT ON UPDATE CASCADE,
 
-    FOREIGN KEY (nosileia_id)
-        REFERENCES nosileia(nosileia_id)
-        ON DELETE SET NULL ON UPDATE CASCADE,
-
-    -- αν αποτέλεσμα = 'Αποχώρηση', να μην υπάρχει παραπομπή και αντίστροφα
-    CONSTRAINT chk_apotelesma_nosileuth
-        CHECK (
-            (apotelesma = 'Παραπομπή'  AND nosileia_id IS NOT NULL) OR
-            (apotelesma = 'Αποχώρηση' AND nosileia_id IS NULL) OR
-            apotelesma IS NULL
-        )
+    CONSTRAINT chk_wres_diagologis
+        CHECK (wra_oloklirosis IS NULL OR wra_afiksis < wra_oloklirosis)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

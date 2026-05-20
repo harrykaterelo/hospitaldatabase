@@ -19,17 +19,8 @@ SELECT
     END                                         AS perigrafi_epipedou,
     d.wra_afiksis,
     TIMESTAMPDIFF(MINUTE, d.wra_afiksis, NOW()) AS lepta_anamon_is,
-    a.amka                                      AS amka_astheni,
-    ant.onoma                                   AS onoma_astheni,
-    ant.eponymo                                 AS eponymo_astheni,
-    d.symptomata,
-    pn.onoma                                    AS onoma_nosilevti,
-    pn.eponymo                                  AS eponymo_nosilevti
+    d.amka_astheni,
+    d.symptomata
 FROM dialogistoixeiwn d
-JOIN asthenis   a   ON a.amka  = d.amka_astheni
-JOIN anthropos  ant ON ant.amka = a.amka
-JOIN nosileutis n   ON n.amka  = d.amka_nosilevti
-JOIN proswpiko  p   ON p.amka  = n.amka
-JOIN anthropos  pn  ON pn.amka = p.amka
 WHERE d.apotelesma IS NULL
 ORDER BY d.epipedo ASC, d.wra_afiksis ASC;
