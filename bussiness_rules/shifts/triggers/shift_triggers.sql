@@ -1,5 +1,5 @@
 DELIMITER //
-
+ 
 DROP TRIGGER IF EXISTS shift_trigger_insert//
 
 CREATE TRIGGER shift_trigger_insert 
@@ -137,11 +137,26 @@ LIMIT 1;
         );
         call add_error(msg);
         SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT = msg; 
+        SET MESSAGE_TEXT = msg;
     END IF;
 
 
 
+    END IF;
+END//
+
+DROP TRIGGER IF EXISTS shift_trigger_after_insert//
+
+CREATE TRIGGER shift_trigger_after_insert
+AFTER INSERT ON efimeria_proswpiko
+FOR EACH ROW
+BEGIN
+    IF efimeria_check(NEW.tmima, NEW.imerominia, NEW.vardia) = 1 THEN
+        UPDATE efimeria
+        SET statusEf = 'FINISHED'
+        WHERE tmima = NEW.tmima
+          AND imerominia = NEW.imerominia
+          AND vardia = NEW.vardia;
     END IF;
 END//
 

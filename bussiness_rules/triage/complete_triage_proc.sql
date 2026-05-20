@@ -4,29 +4,24 @@ DROP PROCEDURE IF EXISTS complete_triage //
 
 -- Ολοκληρώνει διαλογή:
 --   p_apotelesma = 'Αποχώρηση' → ασθενής παίρνει οδηγίες και φεύγει
---                                  (p_odigies συμπληρώνεται, p_nosileia_id = NULL)
 --   p_apotelesma = 'Παραπομπή' → παραπομπή για νοσηλεία
---                                  (p_odigies = NULL, p_nosileia_id απαιτείται)
 CREATE PROCEDURE complete_triage(
-    IN p_id_dialogis  INT,
-    IN p_apotelesma   VARCHAR(20),
-    IN p_odigies      TEXT,
-    IN p_nosileia_id  INT
+    IN p_id_dialogis     INT,
+    IN p_apotelesma      VARCHAR(20),
+    IN p_odigies         TEXT,
+    IN p_wra_oloklirosis DATETIME
 )
 BEGIN
     DECLARE v_current_apotelesma VARCHAR(20);
+    DECLARE v_not_found BOOLEAN DEFAULT FALSE;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_not_found = TRUE;
 
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
         RESIGNAL;
     END;
-
-    -- Έλεγχος εγκυρότητας αποτελέσματος
-    IF p_apotelesma NOT IN ('Αποχώρηση', 'Παραπομπή') THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Το αποτέλεσμα πρέπει να είναι «Αποχώρηση» ή «Παραπομπή».';
-    END IF;
 
     START TRANSACTION;
 
@@ -35,10 +30,9 @@ BEGIN
     WHERE id_dialogis = p_id_dialogis
     FOR UPDATE;
 
-    IF v_current_apotelesma IS NULL THEN
-        -- Ακόμα σε αναμονή: να μην βρεθεί ήδη ολοκληρωμένη εγγραφή
+    IF v_not_found THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Δεν βρέθηκε εκκρεμής εγγραφή διαλογής με αυτό το id.';
+            SET MESSAGE_TEXT = 'Δεν βρέθηκε εγγραφή διαλογής με αυτό το id.';
     END IF;
 
     -- Αποτρέπουμε διπλή ολοκλήρωση
@@ -47,23 +41,11 @@ BEGIN
             SET MESSAGE_TEXT = 'Η διαλογή έχει ήδη ολοκληρωθεί.';
     END IF;
 
-    -- Επιπλέον επαλήθευση συνέπειας δεδομένων
-    IF p_apotelesma = 'Παραπομπή' AND p_nosileia_id IS NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Για παραπομπή απαιτείται έγκυρο nosileia_id.';
-    END IF;
-
-    IF p_apotelesma = 'Αποχώρηση' AND p_nosileia_id IS NOT NULL THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Ασθενής που αποχωρεί δεν μπορεί να έχει παραπομπή νοσηλείας.';
-    END IF;
-
     UPDATE dialogistoixeiwn
     SET
         apotelesma      = p_apotelesma,
         odigies         = p_odigies,
-        nosileia_id     = p_nosileia_id,
-        wra_oloklirosis = NOW()
+        wra_oloklirosis = p_wra_oloklirosis
     WHERE id_dialogis = p_id_dialogis;
 
     COMMIT;
