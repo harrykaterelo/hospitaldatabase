@@ -1217,8 +1217,6 @@ END //
 -- DEPARTMENT TRIGGERS
 -- ============================================================
 
-DELIMITER //
-
 DROP TRIGGER IF EXISTS proswpiko_anikei_se_tmima_insert_trigger //
 
 CREATE TRIGGER proswpiko_anikei_se_tmima_insert_trigger
@@ -1306,11 +1304,6 @@ BEGIN
 
 END //
 
-DELIMITER ;
-
-
-
-
 DROP TRIGGER IF EXISTS tmima_insert_trigger //
 
 CREATE TRIGGER tmima_insert_trigger
@@ -1355,7 +1348,6 @@ IF NEW.amka_dieftinti IS NOT NULL THEN
     END IF;
 END IF;
 END //
-DELIMITER ;
 
 -- ============================================================
 -- NOSILEIA TRIGGERS

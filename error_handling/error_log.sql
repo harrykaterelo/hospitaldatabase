@@ -1,5 +1,0 @@
-CREATE TABLE error_log (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    error_message TEXT NOT NULL,
-    error_time DATETIME NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
