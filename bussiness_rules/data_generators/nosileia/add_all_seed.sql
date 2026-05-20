@@ -1,7 +1,7 @@
     SET NAMES utf8mb4;
 
     DELIMITER //
-
+    
     DROP PROCEDURE IF EXISTS load_generated_full_seed //
 
     CREATE PROCEDURE load_generated_full_seed()
@@ -32,7 +32,7 @@
         DECLARE v_praxi_katigoria VARCHAR(30);
         DECLARE v_praxi_diarkeia_lepta SMALLINT;
         DECLARE v_praxi_kostos DECIMAL(10,2);
-
+        DECLARE v_kod_iatriki VARCHAR(32);
         DECLARE cur CURSOR FOR
             SELECT
                 nosileia_id_seed,
@@ -70,6 +70,7 @@
                 v_has_iatriki_praxi,
                 v_iatriki_praxi_date,
                 v_amka_iatrou,
+                v_kod_iatriki
                 v_vardia_onoma;
 
             IF done = 1 THEN
@@ -117,6 +118,9 @@
                 ORDER BY RAND()
                 LIMIT 1;
 
+                SELECT ip.kodikos into v_kod_iatriki from iatrikespraxeis ip
+                order by rand() limit 1;
+
                 IF v_kod_xwrou IS NULL THEN
                     SIGNAL SQLSTATE '45000'
                     SET MESSAGE_TEXT = 'No xwros_epembasis found for iatriki praxi';
@@ -132,6 +136,7 @@
                     nosileia_id,
                     amka_kyriou_xeirourgou,
                     kod_xwrou,
+                    iatriki_praxi_kodikos,
                     onoma,
                     katigoria,
                     diarkeia_lepta,
@@ -143,6 +148,7 @@
                     v_new_nosileia_id,
                     v_amka_iatrou,
                     v_kod_xwrou,
+                    v_kod_iatriki,
                     v_praxi_onoma,
                     v_praxi_katigoria,
                     v_praxi_diarkeia_lepta,
