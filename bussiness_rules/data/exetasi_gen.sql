@@ -11,7 +11,7 @@ SET NAMES utf8mb4;
 --   * Στο kodikos προστίθεται suffix (1..7) ώστε να μην παραβιάζεται
 --     το PRIMARY KEY (nosileia_id, kodikos).
 -- =====================================================
-
+-- 
 INSERT INTO exetasi (
     nosileia_id,
     kodikos,

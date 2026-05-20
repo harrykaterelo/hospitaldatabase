@@ -100,7 +100,7 @@ FOR EACH ROW
 BEGIN
 
 DECLARE dieftinti_exists INT DEFAULT 0;
-DECLARE vathmida_dieftinti TINYINT;
+DECLARE vathmida_dieftinti VARCHAR(20);
 DECLARE dieftinti_se_allo_tmima INT DEFAULT 0;
 IF NEW.amka_dieftinti IS NOT NULL THEN
 
@@ -114,13 +114,13 @@ IF NEW.amka_dieftinti IS NOT NULL THEN
         SET MESSAGE_TEXT = 'Ο διευθυντής με αυτό το ΑΜΚΑ δεν είναι δηλωμένος ιατρός';
     END IF;   
 
-    SELECT vathmida
+    SELECT v.vathmida_onoma
     INTO vathmida_dieftinti
-    FROM iatros
-    join vathmida_iatrou v on v.vathmida_id = 
+    FROM iatros i
+    join vathmida_iatrou v on v.vathmida_id = i.vathmida
     WHERE amka = NEW.amka_dieftinti;
 
-    IF vathmida_dieftinti != 4 THEN
+    IF vathmida_dieftinti != 'Διεθυντής' THEN
     SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Ο ιατρός με αυτό το ΑΜΚΑ δεν έχει βαθμίδα διευθυντή';
     END IF;

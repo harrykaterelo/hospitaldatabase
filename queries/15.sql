@@ -1,12 +1,13 @@
+CREATE OR REPLACE VIEW query_15 AS
 WITH triageStats AS (
     SELECT
         epipedo,
         COUNT(*) AS peristatika_ana_epipedo,
         AVG(TIMESTAMPDIFF(MINUTE, wra_afiksis, wra_oloklirosis)) / 60.0 AS avg_anamoni,
-        SUM(CASE 
-                WHEN apotelesma = 'Παραπομπή' 
-                THEN 1 
-                ELSE 0 
+        SUM(CASE
+                WHEN apotelesma = 'Παραπομπή'
+                THEN 1
+                ELSE 0
             END) AS arithmos_parapobon
     FROM dialogistoixeiwn
     WHERE wra_oloklirosis IS NOT NULL
@@ -37,5 +38,4 @@ SELECT
     r.parapobes_ana_tmima
 FROM triageStats s
 LEFT JOIN referralsPerDepartment r
-    ON r.epipedo = s.epipedo
-ORDER BY s.epipedo, r.parapobes_ana_tmima DESC;
+    ON r.epipedo = s.epipedo;
